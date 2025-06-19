@@ -12,7 +12,6 @@ import traceback
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
 from pathlib import Path
-import time
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
