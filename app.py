@@ -16,6 +16,8 @@ from pathlib import Path
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+app.mount("/youtubeDownload", StaticFiles(directory="youtubeDownload"), name="youtube_download")
+
 
 print("⏳ Carregando modelo Whisper...")
 model = whisper.load_model("small", device="cuda")
@@ -249,7 +251,7 @@ async def upload_file(
 ):
     client_ip = request.client.host
     uid = uuid.uuid4().hex
-    output_path = f"static/nuvem_{uid}.png"
+    output_path = f"youtubeDownload/nuvem/nuvem_{uid}.png"
 
     # Remove imagem anterior, se houver
     ultima = ultima_imagem_por_cliente.get(client_ip)
