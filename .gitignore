@@ -1,1 +1,12 @@
+# Ignora o conteúdo das pastas, mas não os .gitkeep
+youtubeDownload/audio/*
+!youtubeDownload/audio/.gitkeep
+
+youtubeDownload/video/*
+!youtubeDownload/video/.gitkeep
+
+youtubeDownload/transcript/*
+!youtubeDownload/transcript/.gitkeep
+
 __pycache__/
+*.pyc
