@@ -100,50 +100,8 @@ async def websocket_video(websocket: WebSocket):
         await websocket.send_json({
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
-    await websocket.accept()
-    print("Conexão de baixar video iniciou")
-    try:
-        data = await websocket.receive_json()
-        url = data["url"]
+    
         
-        uid = uuid.uuid4().hex
-        downloads_dir = Path("youtubeDownload/video")
-        downloads_dir.mkdir(parents=True, exist_ok=True)
-
-        # Padrão de nomeação que funciona com yt-dlp
-        output_pattern = str(downloads_dir / f"perm_{uid}.mp4")
-        
-        command = [
-            "yt-dlp",
-            "-f", "bestvideo[ext=mp4][height<=1080]+bestaudio/bestvideo[ext=mp4][height<=720]+bestaudio/best",
-            "--no-playlist",
-            "-o", output_pattern,
-            url
-        ]
-        
-        result = subprocess.run(command, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise Exception(f"Erro no yt-dlp:\n{result.stderr}")
-
-        # Encontra o arquivo real que foi criado
-        output_files = list(downloads_dir.glob(f"perm_{uid}.*"))
-        if not output_files:
-            raise Exception(f"Nenhum arquivo foi criado em {downloads_dir}")
-        
-        output_path_video = str(output_files[0])
-        video_file_name = output_files[0].name
-
-        await websocket.send_json({
-            "progress": 100,
-            "message": "✅ video gerado!",
-            "download_url": f"/download/{video_file_name}"
-        })
-
-    except Exception as e:
-        traceback.print_exc()
-        await websocket.send_json({
-            "error": f"{str(e)}\n\n{traceback.format_exc()}"
-        })
 @app.websocket("/ws/audio")
 async def websocket_audio(websocket: WebSocket):
     await websocket.accept()
