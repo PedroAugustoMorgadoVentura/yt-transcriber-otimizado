@@ -1,66 +1,63 @@
+
 # 🎙️ YouTube Transcriber & WordCloud Generator
 
-Este projeto é uma aplicação web construída com FastAPI e outras bibliotecas para permitir:
+> 🇧🇷 Aplicação web para baixar vídeos do YouTube, transcrever áudios com Whisper e gerar nuvens de palavras.  
+> 🇺🇸 Web app to download YouTube videos, transcribe audio with Whisper, and generate word clouds.
 
-- Baixar vídeos e áudios do YouTube
-- Transcrever o áudio dos vídeos automaticamente com Whisper
-- Gerar nuvens de palavras a partir de textos transcritos ou arquivos `.txt`
+## ✅ Requisitos / Requirements
 
-## ✅ Requisitos
+- Python 3.10+
+- ffmpeg instalado / installed
+- GPU com suporte CUDA (opcional) / CUDA-enabled GPU (optional)
 
-- Python 3.10 ou superior
-- ffmpeg instalado e no PATH
-- GPU com suporte CUDA (opcional, para acelerar o Whisper)
-
-## 🧪 Instalação
-
-1. Clone este repositório:
+## 🚀 Instalação / Installation
 
 ```bash
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd nome-do-projeto
-```
-
-2. Instale as dependências:
-
-```bash
 pip install -r requirements.txt
-```
-
-3. Execute o servidor local:
-
-```bash
 uvicorn app:app --reload
-```
+````
 
-4. Acesse a aplicação via navegador:
+Acesse no navegador: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-Abra o link `http://127.0.0.1:8000` mostrado no terminal após iniciar o servidor.
-
-## 📁 Estrutura de Pastas
+## 📁 Estrutura / Structure
 
 ```
 youtubeDownload/
-├── audio/        # Áudios baixados
-├── video/        # Vídeos baixados
-├── transcript/   # Transcrições em texto
-├── nuvem/        # Nuvens de palavras geradas
-static/           # Arquivos estáticos (CSS, JS, imagens)
-templates/        # HTML renderizado com Jinja2
-app.py            # Código principal da aplicação
+├── audio/        # Áudios baixados / Downloaded audio
+├── video/        # Vídeos baixados / Downloaded video
+├── transcript/   # Transcrições / Transcriptions
+├── nuvem/        # Nuvens de palavras / Word clouds
+static/           # Arquivos estáticos / Static files
+templates/        # HTML com Jinja2 / Jinja2 templates
+app.py            # App principal / Main app
 ```
 
-## ⚙️ Funcionalidades
+## ⚙️ Funcionalidades / Features
 
-- 🎥 Download de vídeos em até 1080p
-- 🎧 Extração de áudio em MP3
-- 🧠 Transcrição de áudios com Whisper
-- ☁️ Criação de nuvem de palavras com base em frequência
+* 🎥 Download de vídeos (até 1080p) / Video download (up to 1080p)
+* 🎧 Extração de áudio em MP3 / Audio extraction in MP3
+* 🧠 Transcrição automática com Whisper / Automatic transcription with Whisper
+* ☁️ Geração de nuvem de palavras / Word cloud generation
 
-## 🤝 Contribuição
+## 📌 Melhorias Futuras / Future Improvements
 
-Sinta-se à vontade para sugerir melhorias, abrir issues ou enviar pull requests.
+* 📁 Transcrição de arquivos locais / Local file transcription
+* 🌍 Suporte a múltiplos idiomas / Multilingual support
+* 💸 Sistema de monetização / Monetization system
+* 👤 Sistema de usuários / User accounts
+* ⭐ Funcionalidade de assinatura / Subscription feature
 
-## 🧡 Autor
+## 🤝 Contribuição / Contributing
+
+Contribuições são bem-vindas!
+Pull requests e sugestões são encorajados.
+Contributions are welcome!
+Pull requests and suggestions encouraged.
+
+## 🧡 Autor / Author
 
 Pedro Augusto – 2025
+
+
