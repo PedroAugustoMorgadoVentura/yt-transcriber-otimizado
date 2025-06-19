@@ -102,7 +102,6 @@ async def websocket_video(websocket: WebSocket):
         await websocket.send_json({
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
-    
         
 @app.websocket("/ws/audio")
 async def websocket_audio(websocket: WebSocket):
@@ -195,21 +194,25 @@ async def websocket_transcribe(websocket: WebSocket):
             progress = int((end / duration) * 100)
             await websocket.send_json({
                 "progress": progress,
-                "message": f"Transcrevendo {start}-{end} segundos...",
+                "message": f"Transcrito {start}-{end} segundos...",
                 "transcription": "\n".join(transcriptions)
             })
 
         os.remove(output_path)
+        
+        transcript_dir = Path("youtubeDownload/transcript")
+        transcript_dir.mkdir(parents=True, exist_ok=True)
 
-        txt_filename = f"transcription_{uid}.txt"
-        with open(txt_filename, "w", encoding="utf-8") as f:
+        txt_path = transcript_dir / f"transcription_{uid}.txt"
+        
+        with open(txt_path, "w", encoding="utf-8") as f:
             f.write("\n".join(transcriptions))
 
         await websocket.send_json({
             "progress": 100,
             "message": "✅ Transcrição concluída!",
             "transcription": "\n".join(transcriptions),
-            "download_url": f"/download/{txt_filename}"
+            "download_url": f"/download/{txt_path.name}"
         })
 
     except Exception as e:
@@ -224,10 +227,10 @@ async def websocket_transcribe(websocket: WebSocket):
 async def download_file(file_name: str):
     file_name = Path(file_name).name  # segurança contra path traversal
     audio_file_path = os.path.abspath(f"youtubeDownload/audio/{file_name}")
-    file_path = os.path.abspath(f"youtubeDownload/transcript/{file_name}")
+    transcribe_file_path = os.path.abspath(f"youtubeDownload/transcript/{file_name}")
     video_file_path = os.path.abspath(f"youtubeDownload/video/{file_name}")
-    if os.path.exists(file_path):
-        return FileResponse(file_path, filename=file_name, media_type='text/plain')
+    if os.path.exists(transcribe_file_path):
+        return FileResponse(transcribe_file_path, filename=file_name, media_type='text/plain')
     
     elif os.path.exists(audio_file_path):
         return FileResponse(audio_file_path, filename=file_name, media_type='audio/mpeg')

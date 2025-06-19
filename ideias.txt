@@ -12,4 +12,3 @@ estudar loveable
 
 implementar jinja 
 
-criar readme
