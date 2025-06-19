@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Youtube Transcriber + Nuvem de Palavras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form, .nuvem-form {
+            max-width: 600px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"], input[type="file"] {
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #result, #nuvem-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        #nuvem-container img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Youtube Transcriber</h1>
+    <form id="transcribe-form">
+        <input type="text" id="url-input" name="url" placeholder="Cole URL do Youtube aqui" required>
+        <button type="submit">Transcrever</button>
+    </form>
+    <form id="audio-form">
+        <input type="text" id="url-input-audio" name="url" placeholder="Cole URL do Youtube aqui" required>
+        <button type="submit">gerar audio</button>
+    </form>
+        <form id="video-form">
+        <input type="text" id="url-input-video" name="url" placeholder="Cole URL do Youtube aqui" required>
+        <button type="submit">gerar video</button>
+    </form>
+
+    <div id="result"></div>
+
+    <h1>Gerar Nuvem de Palavras</h1>
+    <form class="nuvem-form" id="nuvem-form">
+        <input type="file" id="file-input" accept=".txt" required>
+        <button type="submit">Gerar Nuvem</button>
+    </form>
+
+    <div id="nuvem-container"></div>
+
+    <script>
+        document.getElementById("nuvem-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById("file-input");
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("/upload/", {
+                method: "POST",
+                body: formData
+            });
+            if(response.ok){
+                document.getElementById("nuvem-container").textContent = "Nuvem está sendo gerada";
+            };
+            const data = await response.json();
+            if (data.image_path) {
+                document.getElementById("nuvem-container").innerHTML = `<img src="${data.image_path}" alt="Nuvem de Palavras">`;
+            } else {
+                document.getElementById("nuvem-container").textContent = "Erro ao gerar nuvem.";
+            }
+        });
+        document.getElementById("audio-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById("url-input-audio").value;
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = "⏳ gerando audio...";
+             const socket = new WebSocket(`ws://${location.host}/ws/audio`);
+
+            socket.onopen = () => {
+                socket.send(JSON.stringify({ url }));
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.error) {
+                    resultDiv.textContent = `❌ Erro:\n${data.error}`;
+                } else {
+                    if (data.download_url) {
+                        resultDiv.textContent = "Áudio gerado com sucesso"
+                        resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar audio</a>`;
+                    }
+                }
+            };
+            socket.onerror = () => {
+                resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+            };
+
+            socket.onclose = () => {
+                console.log("Conexão WebSocket encerrada.");
+            };
+            
+        });        
+            document.getElementById("video-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById("url-input-video").value;
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = "⏳ gerando video...";
+             const socket = new WebSocket(`ws://${location.host}/ws/video`);
+
+            socket.onopen = () => {
+                socket.send(JSON.stringify({ url }));
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.error) {
+                    resultDiv.textContent = `❌ Erro:\n${data.error}`;
+                } else {
+                    if (data.download_url) {
+                        resultDiv.textContent = "video gerado com sucesso"
+                        resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar video</a>`;
+                    }
+                }
+            };
+            socket.onerror = () => {
+                resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+            };
+
+            socket.onclose = () => {
+                console.log("Conexão WebSocket encerrada.");
+            };
+            
+        });      
+        document.getElementById("transcribe-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById("url-input").value;
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = "⏳ Iniciando transcrição...";
+
+            const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
+
+            socket.onopen = () => {
+                socket.send(JSON.stringify({ url }));
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.error) {
+                    resultDiv.textContent = `❌ Erro:\n${data.error}`;
+                } else {
+                    resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
+                    if (data.download_url) {
+                        resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
+                    }
+                }
+            };
+
+            socket.onerror = () => {
+                resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+            };
+
+            socket.onclose = () => {
+                console.log("Conexão WebSocket encerrada.");
+            };
+        });
+    </script>
+</body>
+</html>
