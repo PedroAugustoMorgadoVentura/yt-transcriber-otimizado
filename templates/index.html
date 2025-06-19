@@ -110,6 +110,14 @@
 
     <form id="transcribe-form">
         <input type="text" id="url-input" name="url" placeholder="Cole URL do Youtube aqui" required>
+        <h6>selecione o modelo whisper de transcrição</h6>
+        <select name="model" id="model" >
+            <option value="tiny">tiny</option>
+            <option value="base">base</option>
+            <option value="small">small</option>
+            <option value="medium">medium</option>
+            <option value="large-v2">large</option>
+        </select>
         <button type="submit">Transcrever</button>
     </form>
 
@@ -138,100 +146,108 @@
     <script>
             
     
-        // Transcrição
-        document.getElementById("transcribe-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const url = document.getElementById("url-input").value;
-            const resultDiv = document.getElementById("result");
-            resultDiv.textContent = "⏳ Iniciando transcrição...";
-            const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
+// Transcrição
+document.getElementById("transcribe-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+const urlInput = document.getElementById("url-input");
+const modelSelect = document.getElementById("model");
+const url = urlInput.value;
+const model = modelSelect.value;
 
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ url }));
-            };
+urlInput.addEventListener("input", () => {
+    modelSelect.disabled = urlInput.value.trim() === "";
+});
 
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.error) {
-                    resultDiv.textContent = `❌ Erro:\n${data.error}`;
-                } else {
-                    resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
-                    if (data.download_url) {
-                        resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
-                    }
-                }
-            };
+    const resultDiv = document.getElementById("result");
+    resultDiv.textContent = "⏳ Iniciando transcrição...";
+    const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
 
-            socket.onerror = () => {
-                resultDiv.textContent = "❌ Erro de conexão com o servidor.";
-            };
+    socket.onopen = () => {
+        socket.send(JSON.stringify({ url, model }));
+    };
 
-            socket.onclose = () => {
-                console.log("Conexão WebSocket encerrada.");
-            };
-        });
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+            resultDiv.textContent = `❌ Erro:\n${data.error}`;
+        } else {
+            resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
+            if (data.download_url) {
+                resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
+            }
+        }
+    };
 
-        // Áudio
-        document.getElementById("audio-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const url = document.getElementById("url-input-audio").value;
-            const resultDiv = document.getElementById("result");
-            resultDiv.textContent = "⏳ Gerando áudio...";
-            const socket = new WebSocket(`ws://${location.host}/ws/audio`);
+    socket.onerror = () => {
+        resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+    };
 
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ url }));
-            };
+    socket.onclose = () => {
+        console.log("Conexão WebSocket encerrada.");
+    };
+});
 
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.error) {
-                    resultDiv.textContent = `❌ Erro:\n${data.error}`;
-                } else if (data.download_url) {
-                    resultDiv.textContent = "Áudio gerado com sucesso";
-                    resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar áudio</a>`;
-                }
-            };
+// Áudio
+document.getElementById("audio-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const audioUrl = document.getElementById("url-input-audio").value;
+    const resultDiv = document.getElementById("result");
+    resultDiv.textContent = "⏳ Gerando áudio...";
+    const socket = new WebSocket(`ws://${location.host}/ws/audio`);
 
-            socket.onerror = () => {
-                resultDiv.textContent = "❌ Erro de conexão com o servidor.";
-            };
+    socket.onopen = () => {
+        socket.send(JSON.stringify({ url: audioUrl }));
+    };
 
-            socket.onclose = () => {
-                console.log("Conexão WebSocket encerrada.");
-            };
-        });
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+            resultDiv.textContent = `❌ Erro:\n${data.error}`;
+        } else if (data.download_url) {
+            resultDiv.textContent = "Áudio gerado com sucesso";
+            resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar áudio</a>`;
+        }
+    };
 
-        // Vídeo
-        document.getElementById("video-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const url = document.getElementById("url-input-video").value;
-            const resultDiv = document.getElementById("result");
-            resultDiv.textContent = "⏳ Gerando vídeo...";
-            const socket = new WebSocket(`ws://${location.host}/ws/video`);
+    socket.onerror = () => {
+        resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+    };
 
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ url }));
-            };
+    socket.onclose = () => {
+        console.log("Conexão WebSocket encerrada.");
+    };
+});
 
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.error) {
-                    resultDiv.textContent = `❌ Erro:\n${data.error}`;
-                } else if (data.download_url) {
-                    resultDiv.textContent = "Vídeo gerado com sucesso";
-                    resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar vídeo</a>`;
-                }
-            };
+// Vídeo
+document.getElementById("video-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const videoUrl = document.getElementById("url-input-video").value;
+    const resultDiv = document.getElementById("result");
+    resultDiv.textContent = "⏳ Gerando vídeo...";
+    const socket = new WebSocket(`ws://${location.host}/ws/video`);
 
-            socket.onerror = () => {
-                resultDiv.textContent = "❌ Erro de conexão com o servidor.";
-            };
+    socket.onopen = () => {
+        socket.send(JSON.stringify({ url: videoUrl }));
+    };
 
-            socket.onclose = () => {
-                console.log("Conexão WebSocket encerrada.");
-            };
-        });
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+            resultDiv.textContent = `❌ Erro:\n${data.error}`;
+        } else if (data.download_url) {
+            resultDiv.textContent = "Vídeo gerado com sucesso";
+            resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar vídeo</a>`;
+        }
+    };
+
+    socket.onerror = () => {
+        resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+    };
+
+    socket.onclose = () => {
+        console.log("Conexão WebSocket encerrada.");
+    };
+});
 
         // Nuvem de palavras
         document.getElementById("nuvem-form").addEventListener("submit", async (e) => {

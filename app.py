@@ -12,17 +12,17 @@ import traceback
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
 from pathlib import Path
-
+import torch
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app.mount("/youtubeDownload", StaticFiles(directory="youtubeDownload"), name="youtube_download")
 
 
-print("⏳ Carregando modelo Whisper...")
+"""print("⏳ Carregando modelo Whisper...")
 model = whisper.load_model("small", device="cuda")
-print("✅ Modelo carregado com sucesso.")
-
+print("✅ Modelo carregado com sucesso.")"""
+model_cache = {}
 def get_audio_duration(audio_path: str) -> float:
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -143,6 +143,12 @@ async def websocket_transcribe(websocket: WebSocket):
     try:
         data = await websocket.receive_json()
         url = data["url"]
+        model = data.get("model", "small")
+        if model not in model_cache:
+            print(f"⏳ Carregando modelo Whisper: {model}...")
+            model_cache[model] = whisper.load_model(model, device="cuda")
+            print(f"✅ Modelo {model} carregado.")
+        model = model_cache[model]
 
         uid = uuid.uuid4().hex
         output_path = f"temp_{uid}.mp3"
