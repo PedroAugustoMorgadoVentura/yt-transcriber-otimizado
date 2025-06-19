@@ -94,7 +94,7 @@ async def websocket_video(websocket: WebSocket):
             "progress": 100,
             "message": "✅ Vídeo em MP4 gerado!",
             "download_url": f"/download/{video_file_name}"
-        })
+        })#oi
 
     except Exception as e:
         traceback.print_exc()
