@@ -1,5 +1,9 @@
 fastapi
 uvicorn[standard]
+jinja2
 whisper
+youtube-dl
 yt-dlp
-ffmpeg-python
+matplotlib
+wordcloud
+nltk
