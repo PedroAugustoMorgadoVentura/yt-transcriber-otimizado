@@ -43,8 +43,16 @@ def benchmark_model(name, model_loader, transcriber):
     print(f"Tempo de transcrição: {transcribe_time:.2f}s")
     print(f"Trecho da transcrição: {result[:150]}...\n")
 
+    return {
+        "nome": name,
+        "tempo_carregamento": load_time,
+        "tempo_transcricao": transcribe_time,
+        "texto": result
+    }
+
 def load_faster_whisper():
-    return FasterModel("small", device=device, compute_type="float16" if device == "cuda" else "int8")
+    # Use int8 na GPU por exemplo, ou float16 se preferir e device == cuda
+    return FasterModel("large", device=device, compute_type="int8" if device == "cuda" else "int8")
 
 def transcribe_faster_whisper(model):
     segments, _ = model.transcribe(audio_path, language="pt")
@@ -57,5 +65,18 @@ def transcribe_whisper(model):
     result = model.transcribe(audio_path, language="pt", fp16=(device == "cuda"))
     return result["text"]
 
-benchmark_model("Faster Whisper", load_faster_whisper, transcribe_faster_whisper)
-benchmark_model("Whisper Original", load_whisper, transcribe_whisper)
+# Executa benchmarks
+res_faster = benchmark_model("Faster Whisper", load_faster_whisper, transcribe_faster_whisper)
+res_original = benchmark_model("Whisper Original", load_whisper, transcribe_whisper)
+
+# Salva resultados em um arquivo .txt
+output_file = "resultado_transcricoes.txt"
+with open(output_file, "w", encoding="utf-8") as f:
+    for res in [res_faster, res_original]:
+        f.write(f"=== Resultado do {res['nome']} ===\n")
+        f.write(f"Tempo de carregamento: {res['tempo_carregamento']:.2f} segundos\n")
+        f.write(f"Tempo de transcrição: {res['tempo_transcricao']:.2f} segundos\n\n")
+        f.write(res["texto"] + "\n\n")
+        f.write("="*40 + "\n\n")
+
+print(f"Resultados salvos em {output_file}")
