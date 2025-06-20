@@ -12,3 +12,4 @@ estudar loveable
 
 implementar jinja 
 
+implementar faster whisper
