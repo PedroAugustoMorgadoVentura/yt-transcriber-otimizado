@@ -146,7 +146,10 @@ async def websocket_transcribe(websocket: WebSocket):
         model = data.get("model", "small")
         if model not in model_cache:
             print(f"⏳ Carregando modelo Whisper: {model}...")
-            model_cache[model] = whisper.load_model(model, device="cuda")
+            import torch
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model_cache[model] = whisper.load_model(model, device=device)
             print(f"✅ Modelo {model} carregado.")
         model = model_cache[model]
 
