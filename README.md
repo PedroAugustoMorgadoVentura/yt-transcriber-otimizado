@@ -59,5 +59,7 @@ Pull requests and suggestions encouraged.
 ## 🧡 Autor / Author
 
 Pedro Augusto – 2025
-
+KAIQUE - 2025
+Enzo Cisconetti - 2025
+Breno - 2025
 
