@@ -4,7 +4,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from wordcloud import WordCloud
 from collections import Counter
-import whisper
 import os
 import uuid
 import subprocess
@@ -12,16 +11,80 @@ import traceback
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
 from pathlib import Path
+import nltk
 import torch
+from faster_whisper import WhisperModel as Twhisper
+import re
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+
+
+def Clean_Text(texto: str) -> str:
+    # Remove linhas com 1 ou 2 palavras, geralmente ruído ou marcações
+    texto = re.sub(r'^(?:\s*\w+\s*){1,2}$', '', texto, flags=re.MULTILINE)
+
+    # Remove sequências numéricas e pontuadas sem sentido (tipo "1. 2. 3.")
+    texto = re.sub(r'(?:\d+\.\s*){3,}', '', texto)
+
+    # Substitui sequências longas de pontuação por "..."
+    texto = re.sub(r'\.{2,}', '..', texto)
+
+    # Remove repetições consecutivas de palavras (ex: "o o o debate")
+    texto = re.sub(r'\b(\w+)([\s\.,;:!?]+\1\b)+', r'\1', texto, flags=re.IGNORECASE)
+
+    # Normaliza espaços múltiplos
+    texto = re.sub(r' {2,}', ' ', texto)
+
+    # Remove quebras de linha múltiplas
+    texto = re.sub(r'\n{3,}', '\n\n', texto)
+
+    # Remove espaços no início e fim de cada linha
+    texto = re.sub(r'^\s+|\s+$', '', texto, flags=re.MULTILINE)
+
+    # Remove linhas completamente vazias ou com só pontuação
+    texto = re.sub(r'^\W*$', '', texto, flags=re.MULTILINE)
+
+    # --- Novas adições para eliminar repetições exageradas ---
+
+    # 1. Reduz repetições de frases simples (como "aperte o botão", "vamos lá") seguidas
+    texto = re.sub(r'(?i)\b(.{3,100}?)([\s\.,;:!?]+\1\b)+', r'\1', texto)
+
+    # 2. Reduz repetições exageradas de vírgulas
+    texto = re.sub(r'(,\s*){2,}', ', ', texto)
+
+    # 3. Reduz repetições exageradas de pontos de exclamação ou interrogação
+    texto = re.sub(r'(!{2,})', '!', texto)
+    texto = re.sub(r'(\?{2,})', '?', texto)
+
+    # 4. Reduz risadas repetidas do tipo "haha haha", "kkk kkk"
+    texto = re.sub(r'\b((ha){2,}|(kk+)){2,}', r'\1', texto, flags=re.IGNORECASE)
+
+    # 5. Reduz sons como "ah ah ah", "uh uh"
+    texto = re.sub(r'\b(ah|uh|oh)([\s\-]+\1)+\b', r'\1', texto, flags=re.IGNORECASE)
+
+    # 6. Reduz interjeições como "e aí", "tá bom", "beleza" repetidas
+    texto = re.sub(r'(?i)\b((e[ \-]?a[ií])|(tá bom)|(beleza))(\s+\1)+', r'\1', texto)
+
+    # 7. Reduz repetições de linhas completas duplicadas consecutivamente
+    texto = re.sub(r'^(.*)(\n\1)+$', r'\1', texto, flags=re.MULTILINE)
+
+    # 8. Remove onomatopeias repetitivas ("tum tum tum", "plim plim")
+    texto = re.sub(r'\b(\w{2,5})(\s+\1){2,}\b', r'\1', texto)
+
+    # 9. Remove eco de palavras com variações mínimas ("vamos, vamos!", "sim... sim...")
+    texto = re.sub(r'\b(\w+)[\W_]+(\1)\b', r'\1', texto, flags=re.IGNORECASE)
+
+    # 10. Limpa repetições espaçadas com emojis ou símbolos: "ok ✅ ok ✅"
+    texto = re.sub(r'\b(\w+)\s*[^\w\s]{1,3}\s*\1\b', r'\1', texto)
+
+    return texto.strip()
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app.mount("/youtubeDownload", StaticFiles(directory="youtubeDownload"), name="youtube_download")
-
-
-"""print("⏳ Carregando modelo Whisper...")
-model = whisper.load_model("small", device="cuda")
-print("✅ Modelo carregado com sucesso.")"""
 model_cache = {}
 def get_audio_duration(audio_path: str) -> float:
     result = subprocess.run(
@@ -95,7 +158,7 @@ async def websocket_video(websocket: WebSocket):
             "progress": 100,
             "message": "✅ Vídeo em MP4 gerado!",
             "download_url": f"/download/{video_file_name}"
-        })#oi
+        })
 
     except Exception as e:
         traceback.print_exc()
@@ -146,10 +209,11 @@ async def websocket_transcribe(websocket: WebSocket):
         model = data.get("model", "small")
         if model not in model_cache:
             print(f"⏳ Carregando modelo Whisper: {model}...")
-            import torch
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            model_cache[model] = whisper.load_model(model, device=device)
+            transcriber_fast = Twhisper(model, device=device, compute_type="float16" if device == "cuda" else "cpu")
+            
+            model_cache[model] = transcriber_fast
             print(f"✅ Modelo {model} carregado.")
         model = model_cache[model]
 
@@ -184,18 +248,16 @@ async def websocket_transcribe(websocket: WebSocket):
                 raise Exception(f"Falha ao criar chunk de áudio: {chunk_filename}")
 
             try:
-                result = model.transcribe(
+                segments, _ = model.transcribe(
                     chunk_filename,
-                    fp16=True,
                     language="pt",
-                    temperature=0,
-                    best_of=5,
-                    beam_size=5
+                    beam_size = 16
                 )
             except Exception as e:
                 raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
-
-            transcriptions.append(result["text"])
+            text = "".join(seg.text for seg in segments)
+            clean_text = Clean_Text(text)
+            transcriptions.append(clean_text)
             os.remove(chunk_filename)
 
             print(f"✅ Transcrito até {end} segundos de {duration} segundos totais.")

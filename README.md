@@ -9,14 +9,18 @@
 - Python 3.10+
 - ffmpeg instalado / installed
 - GPU com suporte CUDA (opcional) / CUDA-enabled GPU (optional)
+- instalar Git Bash / install Git Bash (recomended)
+- Se usar gpu para acelerar processo, instale os drivers do link abaixo e coloque eles no path / if you are going to use GPU to faster process, install the drivers with the link below and put them on path
+[text](https://developer.nvidia.com/cudnn-downloads?)
 
 ## 🚀 Instalação / Installation
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd nome-do-projeto
+git clone https://github.com/PedroAugustoMorgadoVentura/yt-transcriber-otimizado
+cd yt-transcriber-otimizado
 pip install -r requirements.txt
 uvicorn app:app --reload
+
 ````
 
 Acesse no navegador: [http://127.0.0.1:8000](http://127.0.0.1:8000)

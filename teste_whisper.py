@@ -52,7 +52,7 @@ def benchmark_model(name, model_loader, transcriber):
 
 def load_faster_whisper():
     # Use int8 na GPU por exemplo, ou float16 se preferir e device == cuda
-    return FasterModel("large", device=device, compute_type="int8" if device == "cuda" else "int8")
+    return FasterModel("medium", device=device, compute_type="int8" if device == "cuda" else "int8")
 
 def transcribe_faster_whisper(model):
     segments, _ = model.transcribe(audio_path, language="pt")
