@@ -211,7 +211,7 @@ async def websocket_transcribe(websocket: WebSocket):
             print(f"⏳ Carregando modelo Whisper: {model}...")
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            transcriber_fast = Twhisper(model, device=device, compute_type="float16" if device == "cuda" else "cpu")
+            transcriber_fast = Twhisper(model, device=device, compute_type="float16" if device == "cuda" else "int8")
             
             model_cache[model] = transcriber_fast
             print(f"✅ Modelo {model} carregado.")
