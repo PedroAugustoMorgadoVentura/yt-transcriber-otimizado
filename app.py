@@ -207,6 +207,8 @@ async def websocket_transcribe(websocket: WebSocket):
         data = await websocket.receive_json()
         url = data["url"]
         model = data.get("model", "small")
+        language = data.get("language")
+        language = None if language=="none" else language
         if model not in model_cache:
             print(f"⏳ Carregando modelo Whisper: {model}...")
 
@@ -246,11 +248,11 @@ async def websocket_transcribe(websocket: WebSocket):
 
             if not os.path.exists(chunk_filename):
                 raise Exception(f"Falha ao criar chunk de áudio: {chunk_filename}")
-
+            
             try:
                 segments, _ = model.transcribe(
                     chunk_filename,
-                    language="pt",
+                    language=language,
                     beam_size = 16
                 )
             except Exception as e:

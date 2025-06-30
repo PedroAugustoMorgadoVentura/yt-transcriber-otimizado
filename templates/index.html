@@ -145,6 +145,7 @@
   <h1>Youtube Transcriber</h1>
 
   <form id="transcribe-form">
+    <input type="file" name="localfile" id="localfile">
     <input type="text" id="url-input" name="url" placeholder="Cole a URL do YouTube aqui" required />
     <h6>Selecione o modelo Whisper:</h6>
     <select name="model" id="model">
@@ -153,6 +154,12 @@
       <option value="small">Small</option>
       <option value="medium">Medium</option>
       <option value="large-v2">Large</option>
+    </select>
+    <h6>selecione a linguagem do video:</h6>
+    <select name="language" id="language">
+      <option value="pt">português</option>
+      <option value="en">English</option>
+      <option value="none">detectar linguagem</option>
     </select>
     <button type="submit">Transcrever</button>
   </form>
@@ -182,12 +189,14 @@
   <script>
     document.getElementById("transcribe-form").addEventListener("submit", async (e) => {
       e.preventDefault();
+      const localfile = document.getElementById("localfile").files[0];
       const url = document.getElementById("url-input").value;
       const model = document.getElementById("model").value;
       const resultDiv = document.getElementById("result");
       const timerDiv = document.getElementById("timer");
       let secondsElapsed = 0;
       let timerInterval;
+      const language = document.getElementById("language").value;
 
       function startTimer() {
         clearInterval(timerInterval);
@@ -205,12 +214,57 @@
 
       resultDiv.textContent = "Iniciando transcrição...";
       startTimer();
+      if (localfile != null) {
+      const socket = new WebSocket(`ws://${location.host}/ws/local-transcribe`);
+      socket.onopen = () => {
+        socket.send(JSON.stringify({model, language}));
+      }
+      
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+          resultDiv.textContent = `❌ Erro: ${data.error}`;
+        } else {
+          resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
+          if (data.download_url) {
+            resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
+          }
+        }
+      };
+
+
+      } else{
 
       const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
 
       socket.onopen = () => {
-        socket.send(JSON.stringify({ url, model }));
+        socket.send(JSON.stringify({ url, model, language}));
       };
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+          resultDiv.textContent = `❌ Erro: ${data.error}`;
+        } else {
+          resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
+          if (data.download_url) {
+            resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
+          }
+        }
+
+        socket.onerror = () => {
+        resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+      };
+
+      socket.onclose = () => {
+        stopTimer();
+      };
+
+
+      };
+
+ 
+
+
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -231,7 +285,8 @@
       socket.onclose = () => {
         stopTimer();
       };
-    });
+    }}  );
+  
 
     ["audio-form", "video-form"].forEach((formId) => {
       document.getElementById(formId).addEventListener("submit", async (e) => {
