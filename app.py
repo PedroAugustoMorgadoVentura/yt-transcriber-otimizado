@@ -85,6 +85,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app.mount("/youtubeDownload", StaticFiles(directory="youtubeDownload"), name="youtube_download")
+app.mount("/scripts", StaticFiles(directory="scripts"), name="scripts")
 model_cache = {}
 def get_audio_duration(audio_path: str) -> float:
     result = subprocess.run(
