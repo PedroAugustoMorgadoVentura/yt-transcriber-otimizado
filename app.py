@@ -277,7 +277,7 @@ async def websocket_transcribe(websocket: WebSocket):
                 segments, _ = model.transcribe(
                     chunk_filename,
                     language=language,
-                    beam_size = 16
+                    beam_size = 5
                 )
             except Exception as e:
                 await websocket.send_json({
