@@ -16,7 +16,8 @@ import torch
 from faster_whisper import WhisperModel as Twhisper
 import re
 import json
-import base64
+import gc
+
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
@@ -344,7 +345,9 @@ async def websocket_transcribe(websocket: WebSocket):
         await websocket.send_json({
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
-
+    del model_cache[model]  # remove a referência
+    gc.collect()               # força coleta de lixo
+    torch.cuda.empty_cache() 
     await websocket.close()
     print("INFO: connection closed")
 
@@ -459,7 +462,9 @@ async def websocket_transcribe(websocket: WebSocket):
         await websocket.send_json({
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
-
+    del model_cache[model]  # remove a referência
+    gc.collect()               # força coleta de lixo
+    torch.cuda.empty_cache()
     await websocket.close()
     print("INFO: connection closed")
 @app.get("/download/{file_name}")
