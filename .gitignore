@@ -13,3 +13,4 @@ youtubeDownload/nuvem/*
 __pycache__/
 *.pyc
 teste.py
+teste_whisper.py

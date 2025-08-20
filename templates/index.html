@@ -2,56 +2,121 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Youtube Transcriber + Nuvem de Palavras</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <title>YouTube Transcriber + Nuvem de Palavras</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <div class="min-h-screen py-12 px-4">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Header -->
+      <div class="text-center mb-16">
+        <h1 class="hero-title">YouTube Transcriber</h1>
+        <p class="hero-subtitle">
+          Extraia transcrições, áudio e vídeo do YouTube com IA. 
+          Crie nuvens de palavras impressionantes a partir de seus textos.
+        </p>
+      </div>
 
-  <h1>Youtube Transcriber</h1>
+      <!-- Main Tools Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        
+        <!-- Transcription Form -->
+        <div class="tool-card fade-in">
+          <h2>🎥 Transcrição de Vídeo</h2>
+          <form id="transcribe-form" class="ai-form">
+            <div class="form-group">
+              <label class="form-label">📁 Arquivo Local (opcional)</label>
+              <input type="file" name="localfile" id="localfile" class="form-file">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">🔗 URL do YouTube</label>
+              <input type="text" id="url-input" name="url" 
+                     placeholder="Cole a URL do YouTube aqui" class="form-input" />
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">⚡ Modelo Whisper</label>
+                <select name="model" id="model" class="form-select">
+                  <option value="tiny">Tiny (Rápido)</option>
+                  <option value="base">Base (Balanceado)</option>
+                  <option value="small">Small (Bom)</option>
+                  <option value="medium">Medium (Muito Bom)</option>
+                  <option value="large-v2">Large (Melhor)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">🌍 Idioma do Vídeo</label>
+                <select name="language" id="language" class="form-select">
+                  <option value="pt">Português</option>
+                  <option value="en">English</option>
+                  <option value="none">Detectar automaticamente</option>
+                </select>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn-primary">🎯 Transcrever Vídeo</button>
+          </form>
+        </div>
 
-  <form id="transcribe-form">
-    <input type="file" name="localfile" id="localfile">
-    <input type="text" id="url-input" name="url" placeholder="Cole a URL do YouTube aqui" />
-    <h6>Selecione o modelo Whisper:</h6>
-    <select name="model" id="model">
-      <option value="tiny">Tiny</option>
-      <option value="base">Base</option>
-      <option value="small">Small</option>
-      <option value="medium">Medium</option>
-      <option value="large-v2">Large</option>
-    </select>
-    <h6>Selecione a linguagem do vídeo:</h6>
-    <select name="language" id="language">
-      <option value="pt">Português</option>
-      <option value="en">English</option>
-      <option value="none">Detectar linguagem</option>
-    </select>
-    <button type="submit">Transcrever</button>
-  </form>
+        <!-- Media Forms -->
+        <div class="space-y-6">
+          <!-- Audio Form -->
+          <div class="tool-card slide-up">
+            <h2>🎵 Extrair Áudio</h2>
+            <form id="audio-form" class="ai-form">
+              <div class="form-group">
+                <label class="form-label">🔗 URL do YouTube</label>
+                <input type="text" id="url-input-audio" name="url" 
+                       placeholder="Cole URL do YouTube para áudio" 
+                       class="form-input" required />
+              </div>
+              <button type="submit" class="btn-secondary">🎵 Gerar Áudio</button>
+            </form>
+          </div>
 
-  <form id="audio-form">
-    <input type="text" id="url-input-audio" name="url" placeholder="Cole URL do YouTube para áudio" required />
-    <button type="submit">Gerar Áudio</button>
-  </form>
+          <!-- Video Form -->
+          <div class="tool-card slide-up">
+            <h2>🎬 Baixar Vídeo</h2>
+            <form id="video-form" class="ai-form">
+              <div class="form-group">
+                <label class="form-label">🔗 URL do YouTube</label>
+                <input type="text" id="url-input-video" name="url" 
+                       placeholder="Cole URL do YouTube para vídeo" 
+                       class="form-input" required />
+              </div>
+              <button type="submit" class="btn-accent">🎬 Gerar Vídeo</button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-  <form id="video-form">
-    <input type="text" id="url-input-video" name="url" placeholder="Cole URL do YouTube para vídeo" required />
-    <button type="submit">Gerar Vídeo</button>
-  </form>
+      <!-- Results Section -->
+      <div id="timer" class="timer mb-6"></div>
+      <div id="result" class="result-container mb-12"></div>
 
-  <div id="timer"></div>
-  <div id="result"></div>
+      <!-- Word Cloud Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="tool-card glow-pulse">
+          <h2>☁️ Nuvem de Palavras</h2>
+          <form class="nuvem-form ai-form" id="nuvem-form">
+            <div class="form-group">
+              <label class="form-label">📄 Arquivo de Texto (.txt)</label>
+              <input type="file" id="file-input" accept=".txt" class="form-file" required />
+            </div>
+            <button type="submit" class="btn-accent">☁️ Gerar Nuvem</button>
+          </form>
+        </div>
+        
+        <div id="nuvem-container" class="result-container"></div>
+      </div>
+    </div>
+  </div>
 
-  <h1>Gerar Nuvem de Palavras</h1>
-
-  <form class="nuvem-form" id="nuvem-form">
-    <input type="file" id="file-input" accept=".txt" required />
-    <button type="submit">Gerar Nuvem</button>
-  </form>
-
-  <div id="nuvem-container"></div>
-
-<script src="/scripts/scripts.js"></script>
+  <script src="/scripts/scripts.js"></script>
 </body>
 </html>
