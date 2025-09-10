@@ -9,6 +9,7 @@ document.getElementById("transcribe-form").addEventListener("submit", async (e) 
     const timerDiv = document.getElementById("timer");
     let secondsElapsed = 0;
     let timerInterval;
+    const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
 
     function startTimer() {
         clearInterval(timerInterval);
@@ -44,7 +45,6 @@ document.getElementById("transcribe-form").addEventListener("submit", async (e) 
     }
 
     try {
-        const socket = new WebSocket(`ws://${location.host}/ws/local-transcribe`);
         socket.onopen = () => {
           socket.send(JSON.stringify({ model, language }));
           const chunkSize = 2*1024 * 1024; // 2MB
@@ -97,10 +97,8 @@ document.getElementById("transcribe-form").addEventListener("submit", async (e) 
         resultDiv.textContent = `❌ Erro: ${error.message}`;
         stopTimer();
     }
-} 
-else if (url) {
+} else if (url) {
         // Código existente para transcrição de URL
-        const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
         socket.onopen = () => {
             socket.send(JSON.stringify({ url, model, language }));
         };
@@ -127,7 +125,6 @@ else if (url) {
         stopTimer();
     }
 
-    resultDiv.textContent = "✅ Transcrição concluída!";
     function copiartexto(textContent) {
       navigator.clipboard.writeText(textContent).then(() => {
         alert("Texto copiado para a área de transferência!");

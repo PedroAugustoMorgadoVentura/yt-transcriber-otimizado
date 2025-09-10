@@ -100,31 +100,46 @@ def get_audio_duration(audio_path: str) -> float:
         check=True
     )
     return float(result.stdout.strip())
-async def get_audio(websocket: WebSocket):
+async def get_audio(websocket: WebSocket, data: dict):
         temp_dir = "tempo"
         os.makedirs(temp_dir, exist_ok=True)
 
         uid = uuid.uuid4().hex
         output_path = f"tempo/temp_{uid}.mp3"
+        if "url" in data:
+            url = data["url"]
+            command = [
+                "yt-dlp", "-x", "--audio-format", "mp3", "--no-playlist",
+                "-o", output_path,
+                url
+            ]
+            subprocess.run(command, check=True)
+            if not os.path.exists(output_path):
+                await websocket.send_json({
+                    "error": f"Arquivo de áudio não foi criado: {output_path}"
+                })
+                raise Exception(f"Arquivo de áudio não foi criado: {output_path}")
+            duration = get_audio_duration(output_path)
+            return output_path, duration, uid, data
+        else:
+            with open(output_path, "wb") as audio_file:
+                while True:
+                    databyte = await websocket.receive()
 
-        with open(output_path, "wb") as audio_file:
-            while True:
-                databyte = await websocket.receive()
+                    if databyte["type"] == "websocket.receive":
+                        if "text" in databyte:
+                            text_data = databyte["text"]
+                            if text_data == "FILE_END":
+                                break
+                            try:
+                                json_data = json.loads(text_data)
+                                continue
+                            
+                            except json.JSONDecodeError:
+                                continue
 
-                if databyte["type"] == "websocket.receive":
-                    if "text" in databyte:
-                        text_data = databyte["text"]
-                        if text_data == "FILE_END":
-                            break
-                        try:
-                            json_data = json.loads(text_data)
-                            continue
-                        
-                        except json.JSONDecodeError:
-                            continue
-
-                    elif "bytes" in databyte:
-                        audio_file.write(databyte["bytes"])
+                        elif "bytes" in databyte:
+                            audio_file.write(databyte["bytes"])
 
         if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
             await websocket.send_json({
@@ -137,7 +152,7 @@ async def get_audio(websocket: WebSocket):
             error_msg = f"Erro ao obter duração do áudio: {str(e)}"
             await websocket.send_json({"error": error_msg})
             raise Exception(error_msg)
-        return output_path, duration, uid
+        return output_path, duration, uid, None
     
 
 @app.get("/", response_class=HTMLResponse)
@@ -254,7 +269,7 @@ async def websocket_audio(websocket: WebSocket):
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
 
-@app.websocket("/ws/local-transcribe")
+@app.websocket("/ws/transcribe")
 async def websocket_transcribe(websocket: WebSocket):
     await websocket.accept()
     
@@ -264,7 +279,11 @@ async def websocket_transcribe(websocket: WebSocket):
         model = data.get("model", "small")
         language = data.get("language")
         language = None if language=="none" else language
-        #url = data["url"]
+        if "url" in data:
+            url = data["url"]
+            await websocket.send_json({
+                "message": f"⏳ Baixando áudio do vídeo: {url}..."
+            })
 
         if model not in model_cache:
             await websocket.send_json({
@@ -285,7 +304,8 @@ async def websocket_transcribe(websocket: WebSocket):
         chunk_length = 30
         overlap = 2
         transcriptions = []
-        output_path, duration, uid = await get_audio(websocket)
+        
+        output_path, duration, uid, data = await get_audio(websocket, data) 
 
         for start in range(0, int(duration), chunk_length - overlap):
             end = min(start + chunk_length, int(duration))
@@ -353,125 +373,6 @@ async def websocket_transcribe(websocket: WebSocket):
     del model_cache[model]  # remove a referência
     gc.collect()               # força coleta de lixo
     torch.cuda.empty_cache() 
-    await websocket.close()
-    print("INFO: connection closed")
-
-
-@app.websocket("/ws/transcribe")
-async def websocket_transcribe(websocket: WebSocket):
-    await websocket.accept()
-    
-    print("INFO: connection open")
-    try:
-        data = await websocket.receive_json()
-        url = data["url"]
-        model = data.get("model", "small")
-        language = data.get("language")
-        language = None if language=="none" else language
-        if model not in model_cache:
-            await websocket.send_json({
-                "message": f"⏳ Carregando modelo Whisper: {model}..."
-            })
-            print(f"⏳ Carregando modelo Whisper: {model}...")
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            transcriber_fast = Twhisper(model, device=device, compute_type="float16" if device == "cuda" else "int8")
-            
-            model_cache[model] = transcriber_fast
-            await websocket.send_json({
-                "message": f"✅ Modelo {model} carregado."
-            })
-            print(f"✅ Modelo {model} carregado.")
-        model = model_cache[model]
-
-        uid = uuid.uuid4().hex
-        output_path = f"temp_{uid}.mp3"
-
-        command = [
-            "yt-dlp", "-x", "--audio-format", "mp3", "--no-playlist",
-            "-o", output_path,
-            url
-        ]
-        subprocess.run(command, check=True)
-
-        if not os.path.exists(output_path):
-            await websocket.send_json({
-                "error": f"Arquivo de áudio não foi criado: {output_path}"
-            })
-            raise Exception(f"Arquivo de áudio não foi criado: {output_path}")
-
-        duration = get_audio_duration(output_path)
-        chunk_length = 30
-        overlap = 2
-        transcriptions = []
-
-        for start in range(0, int(duration), chunk_length - overlap):
-            end = min(start + chunk_length, int(duration))
-            chunk_filename = f"chunk_{start}_{end}.mp3"
-
-            subprocess.run([
-                "ffmpeg", "-ss", str(start), "-to", str(end),
-                "-i", output_path, "-vn", "-acodec", "mp3", "-y", chunk_filename
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-            if not os.path.exists(chunk_filename):
-                await websocket.send_json({
-                    "error": f"Falha ao criar chunk de áudio: {chunk_filename}"
-                })
-                raise Exception(f"Falha ao criar chunk de áudio: {chunk_filename}")
-            
-            try:
-                segments, _ = model.transcribe(
-                    chunk_filename,
-                    language=language,
-                    beam_size = 5
-                )
-            except Exception as e:
-                await websocket.send_json({
-                    "error": f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}"
-                })
-                raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
-            text = "".join(seg.text for seg in segments)
-            clean_text = Clean_Text(text)
-            transcriptions.append(clean_text)
-            os.remove(chunk_filename)
-
-            print(f"✅ Transcrito até {end} segundos de {duration} segundos totais.")
-            
-            progress = int((end / duration) * 100)
-            await websocket.send_json({
-                "progress": progress,
-                "message": f"✅ Transcrito até {end} segundos de {duration} segundos totais.",
-                "transcription": "\n".join(transcriptions)
-            })
-
-        os.remove(output_path)
-        
-        transcript_dir = Path("youtubeDownload/transcript")
-        transcript_dir.mkdir(parents=True, exist_ok=True)
-
-        txt_path = transcript_dir / f"transcription_{uid}.txt"
-        
-        with open(txt_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(transcriptions))
-
-        await websocket.send_json({
-            "progress": 100,
-            "message": "✅ Transcrição concluída!",
-            "transcription": "\n".join(transcriptions),
-            "download_url": f"/download/{txt_path.name}"
-        })
-        if model in model_cache:
-            del model_cache[model]
-        gc.collect()               # força coleta de lixo
-        torch.cuda.empty_cache()
-
-    except Exception as e:
-        traceback.print_exc()
-        await websocket.send_json({
-            "error": f"{str(e)}\n\n{traceback.format_exc()}"
-        })
-
     await websocket.close()
     print("INFO: connection closed")
 @app.get("/download/{file_name}")
