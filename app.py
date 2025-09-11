@@ -17,6 +17,7 @@ from faster_whisper import WhisperModel as Twhisper
 import re
 import json
 import gc
+import silero_vad
 
 try:
     nltk.data.find('corpora/stopwords')
@@ -84,6 +85,28 @@ def Clean_Text(texto: str) -> str:
 
     return texto.strip()
 
+def silero_vad_setup():
+    global get_speech_timestamps, read_audio, VADIterator, collect_chunks
+    get_speech_timestamps, read_audio, VADIterator, collect_chunks = silero_vad.setup_model(
+        "silero_vad.jit",
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        num_workers=0,
+        threshold=0.5,
+        sampling_rate=16000
+    )
+def eh_mp3(outputpath):
+    return outputpath.endswith('.mp3')
+
+def mp3_to_wav(input_path, output_path):
+    command = [
+        "ffmpeg", "-i", input_path,
+        "-ar", "16000",  # taxa de amostragem
+        "-ac", "1",      # mono
+        output_path
+    ]
+    subprocess.run(command, check=True)
+
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -105,11 +128,12 @@ async def get_audio(websocket: WebSocket, data: dict):
         os.makedirs(temp_dir, exist_ok=True)
 
         uid = uuid.uuid4().hex
-        output_path = f"tempo/temp_{uid}.mp3"
         if "url" in data:
+            output_path = f"tempo/temp_{uid}.wav"
+
             url = data["url"]
             command = [
-                "yt-dlp", "-x", "--audio-format", "mp3", "--no-playlist",
+                "yt-dlp", "-x", "--audio-format", "wav", "--no-playlist",
                 "-o", output_path,
                 url
             ]
@@ -119,9 +143,13 @@ async def get_audio(websocket: WebSocket, data: dict):
                     "error": f"Arquivo de áudio não foi criado: {output_path}"
                 })
                 raise Exception(f"Arquivo de áudio não foi criado: {output_path}")
+            
+            
             duration = get_audio_duration(output_path)
             return output_path, duration, uid, data
         else:
+            output_path = f"tempo/temp_{uid}.mp3"
+
             with open(output_path, "wb") as audio_file:
                 while True:
                     databyte = await websocket.receive()
@@ -152,6 +180,11 @@ async def get_audio(websocket: WebSocket, data: dict):
             error_msg = f"Erro ao obter duração do áudio: {str(e)}"
             await websocket.send_json({"error": error_msg})
             raise Exception(error_msg)
+        if eh_mp3(output_path):
+            wav_path = output_path.rsplit('.', 1)[0] + ".wav"
+            mp3_to_wav(output_path, wav_path)
+            os.remove(output_path)
+            output_path = wav_path
         return output_path, duration, uid, None
     
 
