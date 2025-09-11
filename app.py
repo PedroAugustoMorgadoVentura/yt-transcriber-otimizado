@@ -359,6 +359,7 @@ async def websocket_transcribe(websocket: WebSocket):
             try:
                 segments, _ = model.transcribe(
                     chunk_filename,
+                    vad_filter=True,
                     language=language,
                     beam_size = 5
                 )
