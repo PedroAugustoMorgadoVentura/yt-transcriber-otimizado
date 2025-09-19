@@ -1,4 +1,3 @@
-
 # 🎙️ YouTube Transcriber & WordCloud Generator
 
 > 🇧🇷 Aplicação web para baixar vídeos do YouTube, transcrever áudios com Whisper e gerar nuvens de palavras.  
@@ -11,7 +10,7 @@
 - GPU com suporte CUDA (opcional) / CUDA-enabled GPU (optional)
 - instalar Git Bash / install Git Bash (recomended)
 - Se usar gpu para acelerar processo, instale os drivers do link abaixo e coloque eles no path / if you are going to use GPU to faster process, install the drivers with the link below and put them on path
-[text](https://developer.nvidia.com/cudnn-downloads?)
+  [text](https://developer.nvidia.com/cudnn-downloads?)
 
 ## 🚀 Instalação / Installation
 
@@ -21,7 +20,7 @@ cd yt-transcriber-otimizado
 pip install -r requirements.txt
 uvicorn app:app --reload
 
-````
+```
 
 Acesse no navegador: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
@@ -40,18 +39,18 @@ app.py            # App principal / Main app
 
 ## ⚙️ Funcionalidades / Features
 
-* 🎥 Download de vídeos (até 1080p) / Video download (up to 1080p)
-* 🎧 Extração de áudio em MP3 / Audio extraction in MP3
-* 🧠 Transcrição automática com Whisper / Automatic transcription with Whisper
-* ☁️ Geração de nuvem de palavras / Word cloud generation
+- 🎥 Download de vídeos (até 1080p) / Video download (up to 1080p)
+- 🎧 Extração de áudio em MP3 / Audio extraction in MP3
+- 🧠 Transcrição automática com Whisper / Automatic transcription with Whisper
+- ☁️ Geração de nuvem de palavras / Word cloud generation
 
 ## 📌 Melhorias Futuras / Future Improvements
 
-* 📁 Transcrição de arquivos locais / Local file transcription
-* 🌍 Suporte a múltiplos idiomas / Multilingual support
-* 💸 Sistema de monetização / Monetization system
-* 👤 Sistema de usuários / User accounts
-* ⭐ Funcionalidade de assinatura / Subscription feature
+- 📁 Transcrição de arquivos locais / Local file transcription
+- 🌍 Suporte a múltiplos idiomas / Multilingual support
+- 💸 Sistema de monetização / Monetization system
+- 👤 Sistema de usuários / User accounts
+- ⭐ Funcionalidade de assinatura / Subscription feature
 
 ## 🤝 Contribuição / Contributing
 
@@ -66,4 +65,3 @@ Pedro Augusto – 2025
 KAIQUE - 2025
 Enzo Cisconetti - 2025
 Breno - 2025
-

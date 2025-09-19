@@ -18,7 +18,8 @@ import re
 import json
 import gc
 import silero_vad
-
+# Desativa o uso de symlinks no cache do Hugging Face
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
@@ -130,7 +131,6 @@ async def get_audio(websocket: WebSocket, data: dict):
         uid = uuid.uuid4().hex
         if "url" in data:
             output_path = f"tempo/temp_{uid}.wav"
-
             url = data["url"]
             command = [
                 "yt-dlp", "-x", "--audio-format", "wav", "--no-playlist",
@@ -262,7 +262,7 @@ async def websocket_video(websocket: WebSocket):
         await websocket.send_json({
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
-        
+
 @app.websocket("/ws/audio")
 async def websocket_audio(websocket: WebSocket):
     await websocket.accept()
@@ -305,11 +305,12 @@ async def websocket_audio(websocket: WebSocket):
 @app.websocket("/ws/transcribe")
 async def websocket_transcribe(websocket: WebSocket):
     await websocket.accept()
-    
+
     print("INFO: connection open")
     try:
         data = await websocket.receive_json()
         model = data.get("model", "small")
+        chunk_length_choice = int(data.get("chunk_length_choice", 60))
         language = data.get("language")
         language = None if language=="none" else language
         if "url" in data:
@@ -325,7 +326,7 @@ async def websocket_transcribe(websocket: WebSocket):
             print(f"⏳ Carregando modelo Whisper: {model}...")
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            transcriber_fast = Twhisper(model, device=device, compute_type="float16" if device == "cuda" else "int8")
+            transcriber_fast = Twhisper(model, device=device, compute_type="int8" if device == "cuda" else "int8")
             
             model_cache[model] = transcriber_fast
             await websocket.send_json({
@@ -334,10 +335,9 @@ async def websocket_transcribe(websocket: WebSocket):
             print(f"✅ Modelo {model} carregado.")
         model = model_cache[model]
         
-        chunk_length = 30
+        chunk_length = chunk_length_choice
         overlap = 2
-        transcriptions = []
-        
+        transcriptions = []        
         output_path, duration, uid, data = await get_audio(websocket, data) 
 
         for start in range(0, int(duration), chunk_length - overlap):

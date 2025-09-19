@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 /* Modern AI Tool Design System */
 :root {
@@ -7,29 +7,41 @@
   --foreground: hsl(0, 0%, 98%);
   --card: hsl(240, 10%, 7%);
   --card-hover: hsl(240, 8%, 12%);
-  
+
   /* Brand Colors */
   --primary: hsl(270, 95%, 75%);
   --secondary: hsl(200, 95%, 60%);
   --accent: hsl(140, 95%, 65%);
-  
+
   /* System */
   --border: hsl(240, 8%, 15%);
   --input: hsl(240, 8%, 12%);
   --muted: hsl(240, 5%, 65%);
-  
+
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(270, 95%, 75%), hsl(200, 95%, 60%));
-  --gradient-secondary: linear-gradient(135deg, hsl(200, 95%, 60%), hsl(140, 95%, 65%));
-  --gradient-bg: linear-gradient(135deg, hsl(240, 10%, 3.9%), hsl(240, 15%, 6%));
-  
+  --gradient-primary: linear-gradient(
+    135deg,
+    hsl(270, 95%, 75%),
+    hsl(200, 95%, 60%)
+  );
+  --gradient-secondary: linear-gradient(
+    135deg,
+    hsl(200, 95%, 60%),
+    hsl(140, 95%, 65%)
+  );
+  --gradient-bg: linear-gradient(
+    135deg,
+    hsl(240, 10%, 3.9%),
+    hsl(240, 15%, 6%)
+  );
+
   /* Effects */
   --glow-primary: 0 0 40px hsl(270, 95%, 75%, 0.3);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background: var(--gradient-bg);
   color: var(--foreground);
   margin: 0;
@@ -37,29 +49,61 @@ body {
 }
 
 /* Utility Classes */
-.min-h-screen { min-height: 100vh; }
-.py-12 { padding: 3rem 0; }
-.px-4 { padding: 0 1rem; }
-.mb-16 { margin-bottom: 4rem; }
-.mb-12 { margin-bottom: 3rem; }
-.mb-6 { margin-bottom: 1.5rem; }
-.text-center { text-align: center; }
-.max-w-7xl { max-width: 80rem; }
-.mx-auto { margin: 0 auto; }
-.space-y-6 > * + * { margin-top: 1.5rem; }
+.min-h-screen {
+  min-height: 100vh;
+}
+.py-12 {
+  padding: 3rem 0;
+}
+.px-4 {
+  padding: 0 1rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.text-center {
+  text-align: center;
+}
+.max-w-7xl {
+  max-width: 80rem;
+}
+.mx-auto {
+  margin: 0 auto;
+}
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
 
 /* Grid System */
-.grid { display: grid; }
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-.gap-4 { gap: 1rem; }
-.gap-8 { gap: 2rem; }
+.grid {
+  display: grid;
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
 
 @media (min-width: 768px) {
-  .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 1024px) {
-  .lg\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lg\\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* Typography */
@@ -109,11 +153,24 @@ body {
 }
 
 /* Forms */
-.ai-form { display: flex; flex-direction: column; gap: 1.5rem; }
-.form-group { display: flex; flex-direction: column; gap: 0.75rem; }
-.form-label { font-size: 0.875rem; font-weight: 500; color: var(--foreground); }
+.ai-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
 
-.form-input, .form-select {
+.form-input,
+.form-select {
   width: 100%;
   padding: 0.75rem 1rem;
   background: var(--input);
@@ -123,7 +180,8 @@ body {
   transition: var(--transition);
 }
 
-.form-input:focus, .form-select:focus {
+.form-input:focus,
+.form-select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px hsl(270, 95%, 75%, 0.3);
@@ -140,7 +198,9 @@ body {
 }
 
 /* Buttons */
-.btn-primary, .btn-secondary, .btn-accent {
+.btn-primary,
+.btn-secondary,
+.btn-accent {
   width: 100%;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
@@ -165,7 +225,9 @@ body {
   color: var(--background);
 }
 
-.btn-primary:hover, .btn-secondary:hover, .btn-accent:hover {
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-accent:hover {
   transform: translateY(-2px);
   box-shadow: var(--glow-primary);
 }
@@ -190,21 +252,43 @@ body {
 }
 
 /* Animations */
-.fade-in { animation: fadeIn 0.6s ease-out; }
-.slide-up { animation: slideUp 0.8s ease-out; }
-.glow-pulse { animation: glowPulse 2s ease-in-out infinite alternate; }
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+.slide-up {
+  animation: slideUp 0.8s ease-out;
+}
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite alternate;
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes glowPulse {
-  from { box-shadow: var(--glow-primary); }
-  to { box-shadow: 0 0 40px hsl(200, 95%, 60%, 0.3); }
+  from {
+    box-shadow: var(--glow-primary);
+  }
+  to {
+    box-shadow: 0 0 40px hsl(200, 95%, 60%, 0.3);
+  }
 }
