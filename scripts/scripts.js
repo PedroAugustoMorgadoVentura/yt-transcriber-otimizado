@@ -52,7 +52,7 @@ document
 
       try {
         socket.onopen = () => {
-          socket.send(JSON.stringify({ model, language }));
+          socket.send(JSON.stringify({ model, language, chunk_length_choice }));
           const chunkSize = 2 * 1024 * 1024; // 2MB
           let offset = 0;
           function readchunk() {
