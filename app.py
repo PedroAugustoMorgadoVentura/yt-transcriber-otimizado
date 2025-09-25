@@ -368,9 +368,10 @@ async def websocket_transcribe(websocket: WebSocket):
                     "error": f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}"
                 })
                 raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
+                os.remove(chunk_filename)
             text = "".join(seg.text for seg in segments)
             clean_text = Clean_Text(text)
-            transcriptions.append(clean_text)
+            transcriptions.append(f"\n{start} --> {end} segundos: {clean_text}")
             os.remove(chunk_filename)
 
             print(f"✅ Transcrito até {end} segundos de {duration} segundos totais.")
