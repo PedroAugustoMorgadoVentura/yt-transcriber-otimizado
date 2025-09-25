@@ -310,7 +310,7 @@ async def websocket_transcribe(websocket: WebSocket):
     try:
         data = await websocket.receive_json()
         model = data.get("model", "small")
-        chunk_length_choice = int(data.get("chunk_length_choice", 60))
+        chunk_length_choice = int(data.get("chunk_length_choice"))
         language = data.get("language")
         language = None if language=="none" else language
         if "url" in data:

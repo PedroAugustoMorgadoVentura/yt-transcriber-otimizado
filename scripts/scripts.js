@@ -101,7 +101,7 @@ document
     } else if (url) {
       // Código existente para transcrição de URL
       socket.onopen = () => {
-        socket.send(JSON.stringify({ url, model, language }));
+        socket.send(JSON.stringify({ url, model, language, chunk_length_choice }));
       };
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
