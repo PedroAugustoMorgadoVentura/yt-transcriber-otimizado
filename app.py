@@ -18,7 +18,6 @@ import re
 import json
 import gc
 import silero_vad
-import asyncio
 # Desativa o uso de symlinks no cache do Hugging Face
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 try:
