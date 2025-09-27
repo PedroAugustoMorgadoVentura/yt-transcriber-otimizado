@@ -18,6 +18,7 @@ import re
 import json
 import gc
 import silero_vad
+import asyncio
 # Desativa o uso de symlinks no cache do Hugging Face
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 try:
@@ -333,7 +334,12 @@ async def websocket_transcribe(websocket: WebSocket):
                 "message": f"✅ Modelo {model} carregado."
             })
             print(f"✅ Modelo {model} carregado.")
-        model = model_cache[model]
+        else:
+            transcriber_fast = model_cache[model]
+            await websocket.send_json({
+                "message": f"✅ Modelo {model} já estava carregado."
+            })
+            print(f"✅ Modelo {model} já estava carregado.")
         
         chunk_length = chunk_length_choice
         overlap = 2
@@ -357,7 +363,7 @@ async def websocket_transcribe(websocket: WebSocket):
                 raise Exception(f"Falha ao criar chunk de áudio: {chunk_filename}")
             
             try:
-                segments, _ = model.transcribe(
+                segments, _ = model_cache[model].transcribe(
                     chunk_filename,
                     vad_filter=True,
                     language=language,
@@ -399,16 +405,21 @@ async def websocket_transcribe(websocket: WebSocket):
             "transcription": "\n".join(transcriptions),
             "download_url": f"/download/{txt_path.name}"
         })
-
     except Exception as e:
         traceback.print_exc()
         await websocket.send_json({
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
-    del model_cache[model]  # remove a referência
-    gc.collect()               # força coleta de lixo
-    torch.cuda.empty_cache() 
-    await websocket.close()
+    finally:
+
+        del model_cache[model]  # remove a referência
+        gc.collect()  # força a coleta de lixo
+        print("INFO: cleaning up model from memory")
+
+        await websocket.close()
+        
+        
+        
     print("INFO: connection closed")
 @app.get("/download/{file_name}")
 async def download_file(file_name: str):
