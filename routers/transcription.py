@@ -76,7 +76,7 @@ async def websocket_transcribe(websocket: WebSocket):
                     chunk_filename,
                     vad_filter=True,
                     language=language,
-                    beam_size = 5
+                    beam_size = 2
                 )
             except Exception as e:
                 await websocket.send_json({

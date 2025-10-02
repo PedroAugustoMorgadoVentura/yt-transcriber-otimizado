@@ -1,22 +1,21 @@
+from json import load
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
-import uuid
-import subprocess
-import traceback
-from pathlib import Path
-from utils.get_title import get_title_from_youtube_url, get_title_from_file_path_modern
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from routers import transcription, downloads, wordcloud, video_department, audio_department
 # Desativa o uso de symlinks no cache do Hugging Face
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1" 
+load_dotenv()  # Carrega variáveis de ambiente do .env
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app.mount("/youtubeDownload", StaticFiles(directory="youtubeDownload"), name="youtube_download")
 app.mount("/scripts", StaticFiles(directory="scripts"), name="scripts")
+
 
 app.include_router(transcription.router)
 app.include_router(downloads.router)

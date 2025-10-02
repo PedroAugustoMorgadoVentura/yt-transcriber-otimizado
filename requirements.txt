@@ -10,6 +10,7 @@ faster_whisper==1.1.1
 yt-dlp
 numpy==2.1.0
 silero-vad==6.0.0
+python-dotenv
 #transformers==4.37.2
 #pyannote.audio==2.1.1
 
