@@ -76,7 +76,7 @@ async def websocket_transcribe(websocket: WebSocket):
                     chunk_filename,
                     vad_filter=True,
                     language=language,
-                    beam_size = 2
+                    beam_size = 4
                 )
             except Exception as e:
                 await websocket.send_json({
@@ -118,7 +118,6 @@ async def websocket_transcribe(websocket: WebSocket):
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
     finally:
-        del model_cache[model]
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         print("INFO: cleaning up model from memory")

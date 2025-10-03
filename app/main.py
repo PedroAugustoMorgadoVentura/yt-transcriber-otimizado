@@ -1,5 +1,5 @@
-from json import load
-from fastapi import FastAPI, Request, WebSocket
+import asyncio
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -7,6 +7,9 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routers import transcription, downloads, wordcloud, video_department, audio_department
+if os.name == 'nt': # 'nt' é o código para o sistema operacional Windows
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 # Desativa o uso de symlinks no cache do Hugging Face
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1" 
 load_dotenv()  # Carrega variáveis de ambiente do .env

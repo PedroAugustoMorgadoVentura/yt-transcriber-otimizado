@@ -17,3 +17,5 @@ teste_whisper.py
 testevad.py
 .env
 teste_whisper
+.vscode/
+logs/
