@@ -85,6 +85,8 @@
               🎯 Transcrever Vídeo
             </button>
           </form>
+          <div id="result-transcription" class="result-container mb-12"></div>
+
         </div>
 
         <!-- Media Forms -->
@@ -107,6 +109,7 @@
               <button type="submit" class="btn-secondary">
                 🎵 Gerar Áudio
               </button>
+              <div id="result-audio" class="result-container mb-12"></div>
             </form>
           </div>
 
@@ -125,7 +128,8 @@
                   required
                 />
               </div>
-              <button type="submit" class="btn-accent">🎬 Gerar Vídeo</button>
+              <button type="submit" class="btn-accent">🎬 Baixar Vídeo</button>
+              <div id="result-video" class="result-container mb-12"></div>
             </form>
           </div>
         </div>
@@ -133,7 +137,6 @@
 
       <!-- Results Section -->
       <div id="timer" class="timer mb-6"></div>
-      <div id="result" class="result-container mb-12"></div>
 
       <!-- Word Cloud Section -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -154,7 +157,7 @@
           </form>
         </div>
 
-        <div id="nuvem-container" class="result-container"></div>
+        <div id="nuvem-result" class="result-container"></div>
       </div>
     </div>
 

@@ -7,7 +7,8 @@ document
     const url = document.getElementById("url-input").value;
     const model = document.getElementById("model").value;
     const language = document.getElementById("language").value;
-    const resultDiv = document.getElementById("result");
+    const resultTranscription = document.getElementById("result-transcription");
+    const resultdivID = formId.includes("audio") ? "result-audio" : "result-video";
     const timerDiv = document.getElementById("timer");
     const chunk_length_choice = parseInt(
       document.getElementById("chunk_length").value,
@@ -15,7 +16,12 @@ document
     let secondsElapsed = 0;
     let timerInterval;
     const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
+    const copyButton = document.getElementById("copy-button");
+    copyButton.style.display = "none"; // Esconde o botão inicialmente
 
+    copyButton.onclick = () => {
+      copiartexto(resultTranscription.textContent);
+    };//ainda será implementado
     function startTimer() {
       clearInterval(timerInterval);
       secondsElapsed = 0;
@@ -30,14 +36,14 @@ document
       clearInterval(timerInterval);
     }
 
-    resultDiv.textContent = "Iniciando transcrição...";
+    resultTranscription.textContent = "Iniciando transcrição...";
     startTimer();
 
     if (localfile) {
       // Validações adicionais
       const validTypes = ["audio/mpeg", "audio/wav", "audio/ogg"];
       if (!validTypes.includes(localfile.type)) {
-        resultDiv.textContent =
+        resultTranscription.textContent =
           "❌ Formato não suportado. Use MP3, WAV ou OGG.";
         stopTimer();
         return;
@@ -45,7 +51,7 @@ document
 
       const MAX_SIZE = 1000 * 1024 * 1024; // 1000MB
       if (localfile.size > MAX_SIZE) {
-        resultDiv.textContent = "❌ Arquivo muito grande (máximo 100MB)";
+        resultTranscription.textContent = "❌ Arquivo muito grande (máximo 100MB)";
         stopTimer();
         return;
       }
@@ -60,7 +66,7 @@ document
             const slice = localfile.slice(offset, offset + chunkSize);
             reader.onload = (e) => {
               if (e.target.error) {
-                resultDiv.textContent = `❌ Erro ao ler arquivo: ${e.target.error}`;
+                resultTranscription.textContent = `❌ Erro ao ler arquivo: ${e.target.error}`;
                 socket.close();
                 stopTimer();
                 return;
@@ -80,22 +86,22 @@ document
         socket.onmessage = (event) => {
           const data = JSON.parse(event.data);
           if (data.error) {
-            resultDiv.textContent = `❌ Erro: ${data.error}`;
+            resultTranscription.textContent = `❌ Erro: ${data.error}`;
           } else {
-            resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
+            resultTranscription.textContent = `${data.message}\n\n${data.transcription}`;
             if (data.download_url) {
-              resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
+              resultTranscription.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
             }
           }
         };
         socket.onerror = () => {
-          resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+          resultTranscription.textContent = "❌ Erro de conexão com o servidor.";
         };
         socket.onclose = () => {
           stopTimer();
         };
       } catch (error) {
-        resultDiv.textContent = `❌ Erro: ${error.message}`;
+        resultTranscription.textContent = `❌ Erro: ${error.message}`;
         stopTimer();
       }
     } else if (url) {
@@ -106,22 +112,22 @@ document
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.error) {
-          resultDiv.textContent = `❌ Erro: ${data.error}`;
+          resultTranscription.textContent = `❌ Erro: ${data.error}`;
         } else {
-          resultDiv.textContent = `${data.message}\n\n${data.transcription}`;
+          resultTranscription.textContent = `${data.message}\n\n${data.transcription}`;
           if (data.download_url) {
-            resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
+            resultTranscription.innerHTML += `<br><br><a href="${data.download_url}" download>📥 Baixar Transcrição</a>`;
           }
         }
       };
       socket.onerror = () => {
-        resultDiv.textContent = "❌ Erro de conexão com o servidor.";
+        resultTranscription.textContent = "❌ Erro de conexão com o servidor.";
       };
       socket.onclose = () => {
         stopTimer();
       };
     } else {
-      resultDiv.textContent =
+      resultTranscription.textContent =
         "❌ Por favor, forneça um arquivo de áudio ou uma URL do YouTube.";
       stopTimer();
     }
@@ -144,7 +150,8 @@ document
       ? "url-input-audio"
       : "url-input-video";
     const url = document.getElementById(inputId).value;
-    const resultDiv = document.getElementById("result");
+    const resultdivID = formId.includes("audio") ? "result-audio" : "result-video";
+    const resultDiv = document.getElementById(resultdivID);
     resultDiv.textContent = `⏳ Gerando ${
       formId.includes("audio") ? "áudio" : "vídeo"
     }...`;
@@ -178,8 +185,7 @@ document.getElementById("nuvem-form").addEventListener("submit", async (e) => {
   const file = fileInput.files[0];
   const formData = new FormData();
   formData.append("file", file);
-  const container = document.getElementById("nuvem-container");
-
+  const container = document.getElementById("nuvem-result");
   container.textContent = "⏳ Gerando nuvem...";
   const response = await fetch("/upload/", {
     method: "POST",
