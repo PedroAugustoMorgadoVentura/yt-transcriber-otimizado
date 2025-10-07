@@ -18,11 +18,13 @@ def main():
 
     # 2. INICIA O SERVIDOR UVICORN PROGRAMATICAMENTE
     # O uvicorn.run() irá agora usar o loop com a política que acabamos de definir.
-    uvicorn.run(
-        "app.main:app",  # O caminho para o seu objeto FastAPI ('pasta.arquivo:objeto')
-        host="0.0.0.0",
-        port=8000,
-        reload=True      # Ativa o hot-reload para desenvolvimento
+    asyncio.run(
+        uvicorn.run(
+            "app.main:app",  # O caminho para o seu objeto FastAPI ('pasta.arquivo:objeto')
+            host="0.0.0.0",
+            port=8000,
+            reload=True      # Ativa o hot-reload para desenvolvimento
+        )
     )
 
 if __name__ == "__main__":
