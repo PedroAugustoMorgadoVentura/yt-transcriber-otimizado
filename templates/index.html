@@ -27,7 +27,6 @@
         </p>
       </header>
 
-      <div id="timer" class="timer mb-6" style="display: none;"></div> 
       <main class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <section class="tool-card fade-in">
           <h2>🎥 Transcrição de Vídeo</h2>
@@ -90,9 +89,11 @@
             <button type="submit" class="btn-primary">
               🎯 Transcrever Vídeo
             </button>
+                  <div id="timer" class="timer accordion-body"></div>
+
           </form>
 
-          <div id="result-transcription" class="result-container mb-4 mt-4 text-light" color="blue"></div>
+          <div id="result-transcription" class="result-container mb-4 mt-4 text-light mx-auto" color="blue"></div>
           <button id="copy-button" class="btn-secondary" style="display:none; margin-top: 1rem;">
               📋 Copiar Transcrição
           </button>
