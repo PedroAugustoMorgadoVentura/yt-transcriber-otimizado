@@ -2,48 +2,48 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <title>YouTube Transcriber + Nuvem de Palavras</title>
+    <title>FathomVoice: YouTube Transcriber + Nuvem de Palavras</title>
     <link rel="stylesheet" href="/static/style.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="shortcut icon" href="/static/IMG/FathomVoiceIcon.png" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    
-    
+    <link 
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" 
+      rel="stylesheet" 
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" 
+      crossorigin="anonymous"
+    >
   </head>
   <body>
     <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-16">
-        
-        <img src="/static/IMG/FathomVoiceIcon.png" width="100vh" height="100vh" alt="" srcset="">
+      <header class="text-center mb-16">
+        <img src="/static/IMG/FathomVoiceIcon.png" width="100" height="100" alt="FathomVoice Logo" class="mx-auto mb-4">
         <h1 class="hero-title">FathomVoice</h1>
         <p class="hero-subtitle">
           Extraia transcrições, áudio e vídeo do YouTube com IA. Crie nuvens de
           palavras impressionantes a partir de seus textos.
         </p>
-      </div>
+      </header>
 
-      <!-- Main Tools Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        <!-- Transcription Form -->
-        <div class="tool-card fade-in">
+      <div id="timer" class="timer mb-6" style="display: none;"></div> 
+      <main class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <section class="tool-card fade-in">
           <h2>🎥 Transcrição de Vídeo</h2>
           <form id="transcribe-form" class="ai-form">
             <div class="form-group">
-              <label class="form-label">📁 Arquivo Local (opcional)</label>
+              <label for="localfile" class="form-label">📁 Arquivo Local (opcional)</label>
               <input
                 type="file"
                 name="localfile"
                 id="localfile"
                 class="form-file"
-              />
+                accept="audio/*" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">🔗 URL do YouTube</label>
+              <label for="url-input" class="form-label">🔗 URL do YouTube</label>
               <input
                 type="text"
                 id="url-input"
@@ -54,21 +54,21 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">⚡ Modelo Whisper</label>
+              <label for="model" class="form-label">⚡ Modelo Whisper</label>
               <select name="model" id="model" class="form-select">
                 <option value="tiny">Tiny (Rápido)</option>
                 <option value="base">Base (Balanceado)</option>
                 <option value="small">Small (Bom)</option>
                 <option value="large-v3-turbo">Medium (Muito Bom)</option>
-                <option value="distil-large-v3.5">
-                  great (excelente, mas só inglês)
+                 <option value="distil-large-v3.5">
+                  Distil-Large-v3.5 (Excelente, mas só inglês)
                 </option>
                 <option value="large-v3">Large v3 (Melhor)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label class="form-label">🌍 Idioma do Vídeo</label>
+              <label for="language" class="form-label">🌍 Idioma do Vídeo</label>
               <select name="language" id="language" class="form-select">
                 <option value="pt">Português</option>
                 <option value="en">English</option>
@@ -77,7 +77,7 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">⏱️ Duração do Chunk (segundos)</label>
+              <label for="chunk_length" class="form-label">⏱️ Duração do Chunk (segundos)</label>
               <select name="chunk_length" id="chunk_length" class="form-select">
                 <option value="30">30 segundos</option>
                 <option value="45">45 segundos</option>
@@ -91,18 +91,19 @@
               🎯 Transcrever Vídeo
             </button>
           </form>
-          <div id="result-transcription" class="result-container mb-12"></div>
 
-        </div>
+          <div id="result-transcription" class="result-container mb-4 mt-4 text-light" color="blue"></div>
+          <button id="copy-button" class="btn-secondary" style="display:none; margin-top: 1rem;">
+              📋 Copiar Transcrição
+          </button>
+        </section>
 
-        <!-- Media Forms -->
         <div class="space-y-6">
-          <!-- Audio Form -->
-          <div class="tool-card slide-up">
+          <section class="tool-card slide-up">
             <h2>🎵 Extrair Áudio</h2>
             <form id="audio-form" class="ai-form">
               <div class="form-group">
-                <label class="form-label">🔗 URL do YouTube</label>
+                <label for="url-input-audio" class="form-label">🔗 URL do YouTube</label>
                 <input
                   type="text"
                   id="url-input-audio"
@@ -115,16 +116,15 @@
               <button type="submit" class="btn-secondary">
                 🎵 Gerar Áudio
               </button>
-              <div id="result-audio" class="result-container mb-12"></div>
+              <div id="result-audio" class="result-container mt-4 text-light"></div>
             </form>
-          </div>
+          </section>
 
-          <!-- Video Form -->
-          <div class="tool-card slide-up">
+          <section class="tool-card slide-up">
             <h2>🎬 Baixar Vídeo</h2>
             <form id="video-form" class="ai-form">
               <div class="form-group">
-                <label class="form-label">🔗 URL do YouTube</label>
+                <label for="url-input-video" class="form-label">🔗 URL do YouTube</label>
                 <input
                   type="text"
                   id="url-input-video"
@@ -135,22 +135,18 @@
                 />
               </div>
               <button type="submit" class="btn-accent">🎬 Baixar Vídeo</button>
-              <div id="result-video" class="result-container mb-12"></div>
+              <div id="result-video" class="result-container mt-4 text-light"></div>
             </form>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
 
-      <!-- Results Section -->
-      <div id="timer" class="timer mb-6"></div>
-
-      <!-- Word Cloud Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <div class="tool-card glow-pulse">
           <h2>☁️ Nuvem de Palavras</h2>
           <form class="nuvem-form ai-form" id="nuvem-form">
             <div class="form-group">
-              <label class="form-label">📄 Arquivo de Texto (.txt)</label>
+              <label for="file-input" class="form-label">📄 Arquivo de Texto (.txt)</label>
               <input
                 type="file"
                 id="file-input"
@@ -164,10 +160,14 @@
         </div>
 
         <div id="nuvem-result" class="result-container"></div>
-      </div>
+      </section>
     </div>
 
     <script src="/scripts/scripts.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script 
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" 
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" 
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>
