@@ -1,21 +1,22 @@
+import asyncio
 from fastapi import WebSocket
 import os
 import subprocess
 import traceback
 from pathlib import Path
 import torch
-from faster_whisper import WhisperModel as Twhisper
 from services.audioprocess import get_audio
 from utils.clean_text import Clean_Text
-model_cache = {}
 from fastapi import APIRouter
+from services.charge_model import Charge_Model
 
 router = APIRouter()
 
 @router.websocket("/ws/transcribe")
 async def websocket_transcribe(websocket: WebSocket):
     await websocket.accept()
-
+    output_path = None 
+    chunk_filename = None
     print("INFO: connection open")
     try:
         data = await websocket.receive_json()
@@ -28,27 +29,9 @@ async def websocket_transcribe(websocket: WebSocket):
             await websocket.send_json({
                 "message": f"⏳ Baixando áudio do vídeo: {url}..."
             })
+            print(f"⏳ Baixando áudio do vídeo: {url}...")
+        transcriber_fast = await asyncio.to_thread(Charge_Model, model)
 
-        if model not in model_cache:
-            await websocket.send_json({
-                "message": f"⏳ Carregando modelo Whisper: {model}..."
-            })
-            print(f"⏳ Carregando modelo Whisper: {model}...")
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            transcriber_fast = Twhisper(model, device=device, compute_type="int8" if device == "cuda" else "int4")
-            
-            model_cache[model] = transcriber_fast
-            await websocket.send_json({
-                "message": f"✅ Modelo {model} carregado."
-            })
-            print(f"✅ Modelo {model} carregado.")
-        else:
-            transcriber_fast = model_cache[model]
-            await websocket.send_json({
-                "message": f"✅ Modelo {model} já estava carregado."
-            })
-            print(f"✅ Modelo {model} já estava carregado.")
         
         chunk_length = chunk_length_choice
         overlap = 2
@@ -72,7 +55,7 @@ async def websocket_transcribe(websocket: WebSocket):
                 raise Exception(f"Falha ao criar chunk de áudio: {chunk_filename}")
             
             try:
-                segments, _ = model_cache[model].transcribe(
+                segments, _ = transcriber_fast.transcribe(
                     chunk_filename,
                     vad_filter=True,
                     language=language,
@@ -118,6 +101,10 @@ async def websocket_transcribe(websocket: WebSocket):
             "error": f"{str(e)}\n\n{traceback.format_exc()}"
         })
     finally:
+        if output_path and await asyncio.to_thread(os.path.exists, output_path): # Assíncrono para os.path.exists
+            await asyncio.to_thread(os.remove, output_path)
+        if chunk_filename and await asyncio.to_thread(os.path.exists, chunk_filename):
+            await asyncio.to_thread(os.remove, chunk_filename)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         print("INFO: cleaning up model from memory")
