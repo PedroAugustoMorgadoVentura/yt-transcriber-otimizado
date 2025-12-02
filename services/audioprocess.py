@@ -5,14 +5,16 @@ from utils.get_audio_duration import get_audio_duration
 from utils.conversionfiles import eh_mp3, mp3_to_wav
 import json
 import asyncio
+from utils.get_title import get_title_from_youtube_url, get_title_from_file_path_modern
 
 async def get_audio(websocket: WebSocket, data: dict):
         temp_dir = "temp"
         await asyncio.to_thread(os.makedirs, temp_dir, exist_ok=True)
 
-        uid = uuid.uuid4().hex
+        uid = uuid.uuid4().hex[:8]
         if "url" in data:
-            output_path = f"temp/temp_{uid}.wav"
+            title = await get_title_from_youtube_url(data["url"])
+            output_path = f"temp/{title}_{uid}_.wav"
             url = data["url"]
             command = [
                 "yt-dlp", "-x", "--audio-format", "wav", "--no-playlist",
@@ -30,7 +32,9 @@ async def get_audio(websocket: WebSocket, data: dict):
             duration = await get_audio_duration(output_path)
             return output_path, duration, uid, data
         else:
-            output_path = f"temp/temp_{uid}.mp3"
+            filename = data.get("filename")
+            title = get_title_from_file_path_modern(filename)
+            output_path = f"temp/{title}_{uid}.mp3"
 
             with open(output_path, "wb") as audio_file:
                 while True:

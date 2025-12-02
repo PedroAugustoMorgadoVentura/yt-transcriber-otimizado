@@ -5,6 +5,7 @@ import traceback
 from pathlib import Path
 router = APIRouter()
 import uuid
+from utils.get_title import get_title_from_youtube_url
 
 @router.websocket("/ws/video")
 async def websocket_video(websocket: WebSocket):
@@ -20,9 +21,9 @@ async def websocket_video(websocket: WebSocket):
         uid = uuid.uuid4().hex
         downloads_dir = Path("youtubeDownload/video")
         downloads_dir.mkdir(parents=True, exist_ok=True)
-
+        title = await get_title_from_youtube_url(url)
         # Nome do arquivo de saída (garantindo extensão .mp4)
-        output_path = str(downloads_dir / f"perm_{uid}.mp4")
+        output_path = str(downloads_dir / f"perm_{title}_{uid}.mp4")
         
         command = [
             "yt-dlp",

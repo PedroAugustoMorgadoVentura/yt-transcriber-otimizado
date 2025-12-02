@@ -1,19 +1,26 @@
-import subprocess
+import asyncio
 from pathlib import Path
 
-def get_title_from_youtube_url(url: str) -> str:
+async def get_title_from_youtube_url(url: str) -> str:
     try:
-        result = subprocess.run(
-            ["yt-dlp", "--get-title", url],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True
+        result = await asyncio.create_subprocess_exec(
+            "yt-dlp", "--get-title", url,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-        title = result.stdout.strip()
+        stdout, stderr = await result.communicate()
+        
+        
+        
+        if result.returncode != 0:
+            erro = stderr.decode().strip()
+            print(f"Erro ao obter título: {erro}")
+            return "unknown_title"
+        title = stdout.decode().strip()
         return title
-    except subprocess.CalledProcessError as e:
-        print(f"Erro ao obter título: {e.stderr}")
+    
+    except Exception as e:
+        print(f"Erro não esperado: {e}")
         return "unknown_title"
     
     

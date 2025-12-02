@@ -9,6 +9,7 @@ from services.audioprocess import get_audio
 from utils.clean_text import Clean_Text
 from fastapi import APIRouter
 from services.charge_model import Charge_Model
+from utils.get_title import get_title_from_file_path_modern
 
 router = APIRouter()
 
@@ -37,6 +38,8 @@ async def websocket_transcribe(websocket: WebSocket):
         overlap = 2
         transcriptions = []        
         output_path, duration, uid, data = await get_audio(websocket, data) 
+        title = get_title_from_file_path_modern(output_path)
+
 
         for start in range(0, int(duration), chunk_length - overlap):
             end = min(start + chunk_length, int(duration))
@@ -84,7 +87,7 @@ async def websocket_transcribe(websocket: WebSocket):
         transcript_dir = Path("youtubeDownload/transcript")
         transcript_dir.mkdir(parents=True, exist_ok=True)
 
-        txt_path = transcript_dir / f"transcription_{uid}.txt"
+        txt_path = transcript_dir / f"transcription: {title}_{uid}.txt"
         
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write("\n".join(transcriptions))

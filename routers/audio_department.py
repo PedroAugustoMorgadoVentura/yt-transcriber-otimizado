@@ -14,7 +14,7 @@ async def websocket_audio(websocket: WebSocket):
     try:
         data = await websocket.receive_json()
         url = data["url"]
-        title = get_title_from_youtube_url(url)
+        title = await get_title_from_youtube_url(url)
         uid = uuid.uuid4().hex
         downloads_dir = Path("youtubeDownload/audio")
         downloads_dir.mkdir(parents=True, exist_ok=True)
