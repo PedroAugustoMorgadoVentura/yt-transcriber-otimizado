@@ -44,12 +44,21 @@ async def websocket_transcribe(websocket: WebSocket):
         for start in range(0, int(duration), chunk_length - overlap):
             end = min(start + chunk_length, int(duration))
             chunk_filename = f"chunk_{start}_{end}.mp3"
-
-            subprocess.run([
-                "ffmpeg", "-ss", str(start), "-to", str(end),
-                "-i", output_path, "-vn", "-acodec", "mp3", "-y", chunk_filename
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
+            process = await asyncio.create_subprocess_exec(
+            "ffmpeg",
+            "-i", output_path,
+            "-ss", str(start),
+            "-to", str(end),
+            "-ac", "1",
+            "-ar", "16000",
+            "-vn",
+            "-f", "wav",
+            chunk_filename,
+            "-y",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+            )
+            await process.communicate()
 
             if not os.path.exists(chunk_filename):
                 await websocket.send_json({
