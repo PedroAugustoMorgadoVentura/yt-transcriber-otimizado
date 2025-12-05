@@ -6,6 +6,15 @@ from utils.conversionfiles import eh_mp3, mp3_to_wav
 import json
 import asyncio
 from utils.get_title import get_title_from_youtube_url, get_title_from_file_path_modern
+import re
+
+def sanitize_filename(filename: str) -> str:
+    # Remove os caracteres proibidos no Windows
+    filename = re.sub(r'[<>:"/\\|?*]+', '', filename)
+    # Remove espaços múltiplos e espaços no início/fim
+    filename = re.sub(r'\s+', ' ', filename).strip()
+    return filename
+
 
 async def get_audio(websocket: WebSocket, data: dict):
         temp_dir = "temp"
@@ -13,7 +22,7 @@ async def get_audio(websocket: WebSocket, data: dict):
 
         uid = uuid.uuid4().hex[:8]
         if "url" in data:
-            title = await get_title_from_youtube_url(data["url"])
+            title = sanitize_filename(await get_title_from_youtube_url(data["url"]))
             output_path = f"temp/{title}_{uid}_.wav"
             url = data["url"]
             command = [
@@ -33,7 +42,7 @@ async def get_audio(websocket: WebSocket, data: dict):
             return output_path, duration, uid, data
         else:
             filename = data.get("filename")
-            title = get_title_from_file_path_modern(filename)
+            title = sanitize_filename(get_title_from_file_path_modern(filename))
             output_path = f"temp/{title}_{uid}.mp3"
 
             with open(output_path, "wb") as audio_file:
