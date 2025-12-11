@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Envia os dados iniciais ou começa o upload do arquivo
                 if (localfile) {
                     // Validações adicionais para arquivo local
-                    const validTypes = ["audio/mpeg", "audio/wav", "audio/ogg"];
+                    const validTypes = ["audio/mpeg", "audio/wav", "audio/ogg", "video/mp4", "video/quicktime"];
                     const MAX_SIZE = 1000 * 1024 * 1024; // 1GB
                     
                     if (!validTypes.includes(localfile.type)) {

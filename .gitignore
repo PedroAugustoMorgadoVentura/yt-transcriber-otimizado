@@ -20,3 +20,10 @@ teste_whisper
 .vscode/
 logs/
 temp/
+ffmpeg/
+build/
+dist/
+*.spec
+.nuitka-cache/
+teste/
+compiler.bat
