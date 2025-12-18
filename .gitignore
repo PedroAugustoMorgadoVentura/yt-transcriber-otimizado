@@ -28,3 +28,4 @@ dist/
 teste/
 compiler.bat
 compiler2.bat
+node_modules/
