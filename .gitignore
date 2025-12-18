@@ -27,3 +27,4 @@ dist/
 .nuitka-cache/
 teste/
 compiler.bat
+compiler2.bat

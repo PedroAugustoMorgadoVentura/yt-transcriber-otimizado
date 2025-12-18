@@ -2,7 +2,7 @@ import os
 import uuid
 from fastapi import WebSocket
 from utils.get_audio_duration import get_audio_duration
-from utils.conversionfiles import eh_mp3, mp3_to_wav
+from utils.conversionfiles import is_wav, convert_to_wav
 import json
 import asyncio
 from utils.get_title import get_title_from_youtube_url, get_title_from_file_path_modern
@@ -14,7 +14,6 @@ def sanitize_filename(filename: str) -> str:
     # Remove espaços múltiplos e espaços no início/fim
     filename = re.sub(r'\s+', ' ', filename).strip()
     return filename
-
 
 async def get_audio(websocket: WebSocket, data: dict):
         temp_dir = "temp"
@@ -43,9 +42,10 @@ async def get_audio(websocket: WebSocket, data: dict):
         else:
             filename = data.get("filename")
             title = sanitize_filename(get_title_from_file_path_modern(filename))
-            output_path = f"temp/{title}_{uid}.mp3"
-
-            with open(output_path, "wb") as audio_file:
+            extension = filename.rsplit('.', 1)[-1].lower()
+            raw_path = f"temp/{title}_{uid}_raw.{extension}"
+            wav_path = f"temp/{title}_{uid}.wav"
+            with open(raw_path, "wb") as audio_file:
                 while True:
                     databyte = await websocket.receive()
 
@@ -63,22 +63,25 @@ async def get_audio(websocket: WebSocket, data: dict):
 
                         elif "bytes" in databyte:
                             audio_file.write(databyte["bytes"])
+                            
+        
 
-        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        if not os.path.exists(raw_path) or os.path.getsize(raw_path) == 0:
             await websocket.send_json({
-                "error": f"Arquivo de áudio não foi recebido: {output_path}"
+                "error": f"Arquivo de áudio não foi recebido: {raw_path}"
             })
-            raise Exception(f"Arquivo de áudio não foi recebido: {output_path}")
+            raise Exception(f"Arquivo de áudio não foi recebido: {raw_path}")
+        if is_wav(raw_path):
+            output_path = raw_path
+        else:
+            await convert_to_wav(raw_path, wav_path)
+            os.remove(raw_path)
+            output_path = wav_path
         try:
             duration = await get_audio_duration(output_path)
         except Exception as e:
             error_msg = f"Erro ao obter duração do áudio: {str(e)}"
             await websocket.send_json({"error": error_msg})
             raise Exception(error_msg)
-        if eh_mp3(output_path):
-            wav_path = output_path.rsplit('.', 1)[0] + ".wav"
-            await mp3_to_wav(output_path, wav_path)
-            os.remove(output_path)
-            output_path = wav_path
         return output_path, duration, uid, None
  
