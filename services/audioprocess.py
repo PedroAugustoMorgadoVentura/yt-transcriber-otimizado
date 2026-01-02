@@ -7,6 +7,7 @@ import json
 import asyncio
 from utils.get_title import get_title_from_youtube_url, get_title_from_file_path_modern
 import re
+import aiofiles
 
 def sanitize_filename(filename: str) -> str:
     # Remove os caracteres proibidos no Windows
@@ -45,7 +46,7 @@ async def get_audio(websocket: WebSocket, data: dict):
             extension = filename.rsplit('.', 1)[-1].lower()
             raw_path = f"temp/{title}_{uid}_raw.{extension}"
             wav_path = f"temp/{title}_{uid}.wav"
-            with open(raw_path, "wb") as audio_file:
+            async with aiofiles.open(raw_path, "wb") as audio_file:
                 while True:
                     databyte = await websocket.receive()
 
@@ -62,7 +63,7 @@ async def get_audio(websocket: WebSocket, data: dict):
                                 continue
 
                         elif "bytes" in databyte:
-                            audio_file.write(databyte["bytes"])
+                            await audio_file.write(databyte["bytes"])
                             
         
 

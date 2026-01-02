@@ -43,7 +43,7 @@ async def websocket_transcribe(websocket: WebSocket):
 
         for start in range(0, int(duration), chunk_length - overlap):
             end = min(start + chunk_length, int(duration))
-            chunk_filename = f"chunk_{start}_{end}.mp3"
+            chunk_filename = f"chunk_{start}_{end}.wav"
             process = await asyncio.create_subprocess_exec(
             "ffmpeg",
             "-i", output_path,
@@ -71,7 +71,7 @@ async def websocket_transcribe(websocket: WebSocket):
                     chunk_filename,
                     vad_filter=True,
                     language=language,
-                    beam_size = 4
+                    beam_size = 1
                 )
             except Exception as e:
                 await websocket.send_json({
