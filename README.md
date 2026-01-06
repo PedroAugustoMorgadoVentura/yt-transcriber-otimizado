@@ -18,12 +18,9 @@
 git clone https://github.com/PedroAugustoMorgadoVentura/yt-transcriber-otimizado
 cd yt-transcriber-otimizado
 pip install -r requirements.txt
-uvicorn app:app --reload
+run.py
 
 ```
-
-Acesse no navegador: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-
 ## 📁 Estrutura / Structure
 
 ```
@@ -32,6 +29,9 @@ youtubeDownload/
 ├── video/        # Vídeos baixados / Downloaded video
 ├── transcript/   # Transcrições / Transcriptions
 ├── nuvem/        # Nuvens de palavras / Word clouds
+├── utils/
+├──
+
 static/           # Arquivos estáticos / Static files
 templates/        # HTML com Jinja2 / Jinja2 templates
 app.py            # App principal / Main app
@@ -43,6 +43,7 @@ app.py            # App principal / Main app
 - 🎧 Extração de áudio em MP3 / Audio extraction in MP3
 - 🧠 Transcrição automática com Whisper / Automatic transcription with Whisper
 - ☁️ Geração de nuvem de palavras / Word cloud generation
+- 🌍 Suporte a múltiplos idiomas / Multilingual support
 
 ## 📌 Melhorias Futuras / Future Improvements
 
@@ -62,6 +63,5 @@ Pull requests and suggestions encouraged.
 ## 🧡 Autor / Author
 
 Pedro Augusto – 2025
-KAIQUE - 2025
-Enzo Cisconetti - 2025
-Breno - 2025
+Gabrieli da Silva Adão Monteiro - 2026
+
