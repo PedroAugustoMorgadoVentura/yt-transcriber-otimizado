@@ -15,6 +15,6 @@ numpy
 silero-vad
 python-dotenv
 aiofiles
-#transformers==4.37.2
-#pyannote.audio==2.1.1
+transformers
+pyannote.audio
 

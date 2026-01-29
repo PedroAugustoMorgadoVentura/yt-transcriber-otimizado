@@ -29,3 +29,6 @@ teste/
 compiler.bat
 compiler2.bat
 node_modules/
+testvenv/
+venv/
+ctranslate2/ 

@@ -77,6 +77,8 @@ async def websocket_transcribe(websocket: WebSocket):
                     "error": f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}"
                 })
                 raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
+                await asyncio.to_thread(os.remove, output_path)
+                await asyncio.to_thread(os.remove, chunk_filename)
             text = "".join(seg.text for seg in segments)
             clean_text = Clean_Text(text)
             transcriptions.append(f"\n{start} --> {end} segundos: {clean_text}")
@@ -118,7 +120,7 @@ async def websocket_transcribe(websocket: WebSocket):
             await asyncio.to_thread(os.remove, chunk_filename)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        print("INFO: cleaning up model from memory")
+            print("INFO: cleaning up model from memory")
 
         await websocket.close()
         
