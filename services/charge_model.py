@@ -10,12 +10,7 @@ def Charge_Model(model_name: str) -> Twhisper:
         print(f"🔄 Carregando modelo Whisper: {model_name}")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         # AQUI: Armazena a instância real do modelo Twhisper
-        capability = Gpu_Recognition()
-        if capability < 9.0:
-            compute_type = "int8"
-        else:
-            compute_type = "bfloat16" 
-        
+        compute_type = "int8_bfloat16"
         model_instance = Twhisper(model_name, device=device, compute_type=compute_type if device == "cuda" else "int8")
         model_cache[model_name] = model_instance
         print(f"✅ Modelo {model_name} carregado.")
