@@ -46,9 +46,6 @@ app.py            # App principal / Main app
 - 🌍 Suporte a múltiplos idiomas / Multilingual support
 
 ## 📌 Melhorias Futuras / Future Improvements
-
-- 📁 Transcrição de arquivos locais / Local file transcription
-- 🌍 Suporte a múltiplos idiomas / Multilingual support
 - 💸 Sistema de monetização / Monetization system
 - 👤 Sistema de usuários / User accounts
 - ⭐ Funcionalidade de assinatura / Subscription feature
