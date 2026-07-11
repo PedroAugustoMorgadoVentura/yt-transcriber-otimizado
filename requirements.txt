@@ -17,4 +17,4 @@ python-dotenv
 aiofiles
 transformers
 pyannote.audio
-
+hf_xet

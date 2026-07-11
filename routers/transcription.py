@@ -67,7 +67,7 @@ async def websocket_transcribe(websocket: WebSocket):
             
             try:
                 segments, _ = transcriber_fast.transcribe(
-                    chunk_filename,
+                    chunk_filename,  # Placeholder, not used in the function
                     vad_filter=True,
                     language=language,
                     beam_size = 1
@@ -76,13 +76,15 @@ async def websocket_transcribe(websocket: WebSocket):
                 await websocket.send_json({
                     "error": f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}"
                 })
-                raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
-                await asyncio.to_thread(os.remove, output_path)
                 await asyncio.to_thread(os.remove, chunk_filename)
+                await asyncio.to_thread(os.remove, output_path)
+                
+                raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
+                
             text = "".join(seg.text for seg in segments)
             clean_text = Clean_Text(text)
             transcriptions.append(f"\n{start} --> {end} segundos: {clean_text}")
-            os.remove(chunk_filename)
+            await asyncio.to_thread(os.remove, chunk_filename)
             print(f"✅ Transcrito até {end} segundos de {duration} segundos totais.")
             
             progress = int((end / duration) * 100)
@@ -92,7 +94,7 @@ async def websocket_transcribe(websocket: WebSocket):
                 "transcription": "\n".join(transcriptions)
             })
 
-        os.remove(output_path)
+        await asyncio.to_thread(os.remove, output_path)
         
         transcript_dir = Path("youtubeDownload/transcript")
         transcript_dir.mkdir(parents=True, exist_ok=True)
