@@ -1,5 +1,6 @@
---extra-index-url https://download.pytorch.org/whl/cu128
-torch 
+--index-url https://download.pytorch.org/whl/cu128
+--index-url https://pypi.nvidia.com
+torch
 torchvision 
 torchaudio 
 fastapi
@@ -18,3 +19,5 @@ aiofiles
 transformers
 pyannote.audio
 hf_xet
+nvidia-cublas-cu12
+nvidia-cudnn-cu12

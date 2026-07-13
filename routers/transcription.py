@@ -33,7 +33,6 @@ async def websocket_transcribe(websocket: WebSocket):
 
         
         chunk_length = chunk_length_choice
-        overlap = 2
         transcriptions = []        
         output_path, duration, uid, data = await get_audio(websocket, data) 
         title = get_title_from_file_path_modern(output_path)
