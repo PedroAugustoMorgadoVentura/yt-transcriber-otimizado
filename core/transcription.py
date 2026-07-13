@@ -1,169 +1,61 @@
-"""
-Módulo de Transcrição usando Faster Whisper
-Funções para transcrever áudio em texto com suporte a GPU
-Segue o padrão assíncrono do projeto
-"""
-
 import os
 import asyncio
-from typing import Optional, Dict, Any
-from services.charge_model import Charge_Model
-from utils.clean_text import Clean_Text
-from utils.get_audio_duration import get_audio_duration
-
-
-async def transcribe_chunk(
-    audio_path: str,
-    model,
-    language: Optional[str] = None,
-    beam_size: int = 1,
-    vad_filter: bool = True
-) -> Dict[str, Any]:
-    """
-    Transcreve um chunk de áudio
-    
-    Args:
-        audio_path: Caminho do arquivo de áudio
-        model: Modelo Whisper já carregado
-        language: Código do idioma ou None para auto-detectar
-        beam_size: Tamanho do beam search
-        vad_filter: Usar Voice Activity Detection
-    
-    Returns:
-        Dict com texto limpo e metadados
-    """
-    segments, info = await asyncio.to_thread(
-        model.transcribe,
-        audio_path,
-        language=language,
-        beam_size=beam_size,
-        vad_filter=vad_filter
-    )
-    
-    text = "".join(seg.text for seg in segments)
-    clean_text = Clean_Text(text)
-    
-    return {
-        'text': clean_text,
-        'raw_text': text,
-        'language': info.language if hasattr(info, 'language') else language,
-    }
-
-
-async def transcribe_audio_with_chunks(
-    audio_path: str,
-    model_name: str = "small",
-    chunk_length: int = 30,
-    overlap: int = 2,
-    language: Optional[str] = None,
-    beam_size: int = 1,
-    websocket=None
-) -> Dict[str, Any]:
-    """
-    Transcreve áudio em chunks para melhor gerenciamento de memória
-    Integrável com WebSocket para enviar progresso em tempo real
-    
-    Args:
-        audio_path: Caminho do arquivo de áudio
-        model_name: Modelo Whisper (tiny, base, small, medium, large)
-        chunk_length: Duração de cada chunk em segundos
-        overlap: Sobreposição entre chunks em segundos
-        language: Código do idioma ou None para auto-detectar
-        beam_size: Tamanho do beam search (1-5)
-        websocket: WebSocket opcional para enviar progresso
-    
-    Returns:
-        Dict com:
-        - transcription: texto completo transcrito
-        - segments: lista de segmentos com timing
-        - language: idioma detectado
-        - duration: duração total do áudio
-    """
-    if not os.path.exists(audio_path):
-        raise FileNotFoundError(f"Arquivo não encontrado: {audio_path}")
-    
-    # Carregar modelo uma vez
-    model = await asyncio.to_thread(Charge_Model, model_name)
-    
-    # Obter duração
-    duration = await get_audio_duration(audio_path)
-    
-    transcriptions = []
-    segments_data = []
-    detected_language = language
-    
-    print(f"⏳ Iniciando transcrição: {audio_path} ({duration:.0f}s)")
-    
-    for start in range(0, int(duration), chunk_length - overlap):
-        end = min(start + chunk_length, int(duration))
-        chunk_filename = f"chunk_{start}_{end}.wav"
-        
+def _safe_next(it):
         try:
-            # Criar chunk com ffmpeg
-            print(f"📦 Criando chunk: {start}s → {end}s")
-            process = await asyncio.create_subprocess_exec(
-                "ffmpeg",
-                "-i", audio_path,
-                "-ss", str(start),
-                "-to", str(end),
-                "-ac", "1",
-                "-ar", "16000",
-                "-vn",
-                "-f", "wav",
-                chunk_filename,
-                "-y",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            await process.communicate()
-            
-            if not os.path.exists(chunk_filename):
-                raise Exception(f"Falha ao criar chunk: {chunk_filename}")
-            
-            # Transcrever chunk
-            result = await transcribe_chunk(
-                chunk_filename,
-                model,
-                language=language,
-                beam_size=beam_size,
-                vad_filter=True
-            )
-            
-            if detected_language is None:
-                detected_language = result['language']
-            
-            transcriptions.append(f"\n{start} --> {end} segundos: {result['text']}")
-            segments_data.append({
-                'start': start,
-                'end': end,
-                'text': result['text']
-            })
-            
-            # Calcular progresso
-            progress = int((end / duration) * 100)
-            message = f"✅ Transcrito até {end} segundos de {duration:.0f} segundos totais."
-            
-            print(message)
-            
-            # Enviar progresso via WebSocket se disponível
-            if websocket:
-                await websocket.send_json({
-                    "progress": progress,
-                    "message": message,
-                    "transcription": "\n".join(transcriptions)
-                })
+            return next(it)
+        except StopIteration:
+            return None
+async def brute_transcription(audio_path, model, language):
+    """Transcreve um arquivo de áudio e emite os segmentos conforme vão sendo processados."""
+    if not audio_path:
+        raise ValueError("audio_path is obrigatório")
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError(f"Arquivo de áudio não encontrado: {audio_path}")
+
+    if model is None:
+        raise ValueError("model é obrigatório")
+
+    if not hasattr(model, "transcribe") or not callable(getattr(model, "transcribe")):
+        raise TypeError("model deve expor um método 'transcribe' chamável")
         
-        finally:
-            # Limpar chunk
-            if os.path.exists(chunk_filename):
-                await asyncio.to_thread(os.remove, chunk_filename)
+    transcriber_fast = model
     
-    return {
-        'transcription': "\n".join(transcriptions),
-        'segments': segments_data,
-        'language': detected_language,
-        'duration': duration,
-        'model': model_name
-    }
+    try:
+        segments, _ = await asyncio.to_thread(
+            transcriber_fast.transcribe,
+            audio_path,
+            language=language,
+            vad_filter=True,
+            # Seus parâmetros mantidos conforme solicitado2
+            vad_parameters=dict(min_speech_duration_ms=150, min_silence_duration_ms=150, threshold=0.30),
+            beam_size=1,
+        )
+    except Exception as exc: 
+        raise RuntimeError(f"Erro ao transcrever o áudio '{audio_path}': {exc}") from exc
 
+    segment_timestamps = []
+    
+    # Transforma o gerador síncrono em um iterador iterável manualmente
+    iterator = iter(segments or [])
 
+    
+    while True:
+        try:
+            # 🎯 Isola o avanço síncrono do iterador C++ do Faster-Whisper dentro da Thread Pool
+            segment = await asyncio.to_thread(_safe_next, iterator)
+            if segment is None:
+                break  # O iterador chegou ao fim
+        except StopIteration:
+            # O iterador chegou ao fim, quebra o laço while
+            break
+
+        start_time = getattr(segment, "start", None)
+        end_time = getattr(segment, "end", None)
+        text = getattr(segment, "text", "")
+
+        if start_time is None or end_time is None:
+            raise ValueError(f"Segmento inválido recebido da transcrição: {segment}")
+
+        segment_timestamps.append((start_time, end_time, text))
+        yield start_time, end_time, text

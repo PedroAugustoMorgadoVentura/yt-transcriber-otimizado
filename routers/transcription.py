@@ -9,14 +9,13 @@ from utils.clean_text import Clean_Text
 from fastapi import APIRouter
 from services.charge_model import Charge_Model
 from utils.get_title import get_title_from_file_path_modern
-
+from core.transcription import brute_transcription
 router = APIRouter()
 
 @router.websocket("/ws/transcribe")
 async def websocket_transcribe(websocket: WebSocket):
     await websocket.accept()
     output_path = None 
-    chunk_filename = None
     print("INFO: connection open")
     try:
         data = await websocket.receive_json()
@@ -30,7 +29,7 @@ async def websocket_transcribe(websocket: WebSocket):
                 "message": f"⏳ Baixando áudio do vídeo: {url}..."
             })
             print(f"⏳ Baixando áudio do vídeo: {url}...")
-        transcriber_fast = await asyncio.to_thread(Charge_Model, model)
+        charge_model = await asyncio.to_thread(Charge_Model, model)
 
         
         chunk_length = chunk_length_choice
@@ -40,53 +39,11 @@ async def websocket_transcribe(websocket: WebSocket):
         title = get_title_from_file_path_modern(output_path)
 
 
-        for start in range(0, int(duration), chunk_length - overlap):
-            end = min(start + chunk_length, int(duration))
-            chunk_filename = f"chunk_{start}_{end}.wav"
-            process = await asyncio.create_subprocess_exec(
-            "ffmpeg",
-            "-i", output_path,
-            "-ss", str(start),
-            "-to", str(end),
-            "-ac", "1",
-            "-ar", "16000",
-            "-vn",
-            "-f", "wav",
-            chunk_filename,
-            "-y",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-            )
-            await process.communicate()
-
-            if not os.path.exists(chunk_filename):
-                await websocket.send_json({
-                    "error": f"Falha ao criar chunk de áudio: {chunk_filename}"
-                })
-                raise Exception(f"Falha ao criar chunk de áudio: {chunk_filename}")
-            
-            try:
-                segments, _ = transcriber_fast.transcribe(
-                    chunk_filename,  # Placeholder, not used in the function
-                    vad_filter=True,
-                    language=language,
-                    beam_size = 1
-                )
-            except Exception as e:
-                await websocket.send_json({
-                    "error": f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}"
-                })
-                await asyncio.to_thread(os.remove, chunk_filename)
-                await asyncio.to_thread(os.remove, output_path)
-                
-                raise Exception(f"Erro ao transcrever o chunk {chunk_filename}: {str(e)}")
-                
-            text = "".join(seg.text for seg in segments)
+        async for start, end, text in brute_transcription(output_path, charge_model, language):
             clean_text = Clean_Text(text)
-            transcriptions.append(f"\n{start} --> {end} segundos: {clean_text}")
-            await asyncio.to_thread(os.remove, chunk_filename)
+            transcriptions.append(f"{text}")
             print(f"✅ Transcrito até {end} segundos de {duration} segundos totais.")
-            
+
             progress = int((end / duration) * 100)
             await websocket.send_json({
                 "progress": progress,
@@ -118,8 +75,7 @@ async def websocket_transcribe(websocket: WebSocket):
     finally:
         if output_path and await asyncio.to_thread(os.path.exists, output_path): # Assíncrono para os.path.exists
             await asyncio.to_thread(os.remove, output_path)
-        if chunk_filename and await asyncio.to_thread(os.path.exists, chunk_filename):
-            await asyncio.to_thread(os.remove, chunk_filename)
+
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             print("INFO: cleaning up model from memory")
