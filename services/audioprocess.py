@@ -8,6 +8,7 @@ import asyncio
 from utils.get_title import get_title_from_youtube_url, get_title_from_file_path_modern
 import re
 import aiofiles
+from utils.runtime_paths import ensure_runtime_dir, resolve_runtime_path
 
 def sanitize_filename(filename: str) -> str:
     # Remove os caracteres proibidos no Windows
@@ -17,13 +18,13 @@ def sanitize_filename(filename: str) -> str:
     return filename
 
 async def get_audio(websocket: WebSocket, data: dict):
-        temp_dir = "temp"
+        temp_dir = str(ensure_runtime_dir("temp"))
         await asyncio.to_thread(os.makedirs, temp_dir, exist_ok=True)
 
         uid = uuid.uuid4().hex[:8]
         if "url" in data:
             title = sanitize_filename(await get_title_from_youtube_url(data["url"]))
-            output_path = f"temp/{title}_{uid}_.wav"
+            output_path = str(resolve_runtime_path("temp", f"{title}_{uid}_.wav"))
             url = data["url"]
             command = [
                 "yt-dlp", "-x", "--audio-format", "wav", "--no-playlist",
@@ -44,8 +45,8 @@ async def get_audio(websocket: WebSocket, data: dict):
             filename = data.get("filename")
             title = sanitize_filename(get_title_from_file_path_modern(filename))
             extension = filename.rsplit('.', 1)[-1].lower()
-            raw_path = f"temp/{title}_{uid}_raw.{extension}"
-            wav_path = f"temp/{title}_{uid}.wav"
+            raw_path = str(resolve_runtime_path("temp", f"{title}_{uid}_raw.{extension}"))
+            wav_path = str(resolve_runtime_path("temp", f"{title}_{uid}.wav"))
             async with aiofiles.open(raw_path, "wb") as audio_file:
                 while True:
                     databyte = await websocket.receive()

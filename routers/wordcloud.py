@@ -5,14 +5,20 @@ from fastapi import Request, UploadFile, File
 
 import nltk
 from wordcloud import WordCloud
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
 from fastapi import APIRouter
+from utils.runtime_paths import resolve_runtime_path
 
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
-    nltk.download('stopwords')
+    try:
+        nltk.download('stopwords', quiet=True)
+    except Exception:
+        pass
 
 router = APIRouter()
 
@@ -26,15 +32,21 @@ async def upload_file(
 ):
     client_ip = request.client.host
     uid = uuid.uuid4().hex
-    output_path = f"youtubeDownload/nuvem/nuvem_{uid}.png"
+    output_path = str(resolve_runtime_path("youtubeDownload", "nuvem", f"nuvem_{uid}.png"))
 
     # Remove imagem anterior, se houver
     ultima = ultima_imagem_por_cliente.get(client_ip)
     if ultima and os.path.exists(ultima):
         os.remove(ultima)
 
-    stopwords_pt = set(stopwords.words('portuguese'))
-    stopwords_pt.update(['ludovico', 'adriana'])
+    try:
+        stopwords_pt = set(stopwords.words('portuguese'))
+    except LookupError:
+        stopwords_pt = {
+            'de','a','o','que','e','do','da','em','um','para','com','não','na','se','por','mais','os','as','ou','mas','foi','como','ao','ele','das','tem','à','ser','suas','me','te','nos','vos','meu','minha','tua','sua','nosso','nossa','seu','sua','está','estão','este','esta','isto','isso','aquilo','um','uma','uns','umas','ludovico','adriana'
+        }
+    else:
+        stopwords_pt.update(['ludovico', 'adriana'])
     contents = await file.read()
     texto = contents.decode("utf-8").lower()
     palavras = ''.join(c if c.isalnum() or c.isspace() else ' ' for c in texto).split()

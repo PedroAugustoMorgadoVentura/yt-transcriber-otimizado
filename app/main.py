@@ -8,6 +8,7 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routers import transcription, downloads, wordcloud, video_department, audio_department
+from utils.runtime_paths import resolve_runtime_path
 if os.name == 'nt': # 'nt' é o código para o sistema operacional Windows
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
@@ -15,10 +16,10 @@ if os.name == 'nt': # 'nt' é o código para o sistema operacional Windows
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1" 
 load_dotenv()  # Carrega variáveis de ambiente do .env
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-app.mount("/youtubeDownload", StaticFiles(directory="youtubeDownload"), name="youtube_download")
-app.mount("/scripts", StaticFiles(directory="scripts"), name="scripts")
+app.mount("/static", StaticFiles(directory=str(resolve_runtime_path("static"))), name="static")
+templates = Jinja2Templates(directory=str(resolve_runtime_path("templates")))
+app.mount("/youtubeDownload", StaticFiles(directory=str(resolve_runtime_path("youtubeDownload"))), name="youtube_download")
+app.mount("/scripts", StaticFiles(directory=str(resolve_runtime_path("scripts"))), name="scripts")
 
 
 app.include_router(transcription.router)

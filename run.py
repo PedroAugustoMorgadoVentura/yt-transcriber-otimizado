@@ -8,15 +8,17 @@ import tkinter as tk
 from app.main import app 
 import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-FFMPEEG_PATH = os.path.join(BASE_DIR, "ffmpeg")
+from utils.runtime_paths import get_runtime_root
+
+BASE_DIR = get_runtime_root()
+FFMPEG_BIN_PATH = os.path.join(BASE_DIR, "ffmpeg", "bin")
 
 
-if os.path.isdir(FFMPEEG_PATH):
-    os.environ["PATH"] += os.pathsep + FFMPEEG_PATH
-
+if os.path.isdir(FFMPEG_BIN_PATH):
+    if FFMPEG_BIN_PATH not in os.environ.get("PATH", "").split(os.pathsep):
+        os.environ["PATH"] += os.pathsep + FFMPEG_BIN_PATH
 else:
-    print("AVISO: Pasta /ffmpeg não encontrada (ffmpeg não disponível localmente)")
+    print("AVISO: Pasta /ffmpeg/bin não encontrada (ffmpeg não disponível localmente)")
 
 def test_cuda_availability():
     if not torch.cuda.is_available():

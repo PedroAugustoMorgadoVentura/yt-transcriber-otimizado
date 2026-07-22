@@ -6,6 +6,7 @@ import traceback
 from pathlib import Path
 import uuid
 from utils.get_title import get_title_from_youtube_url
+from utils.runtime_paths import ensure_runtime_dir
 
 router = APIRouter()
 
@@ -26,8 +27,7 @@ async def websocket_video(websocket: WebSocket):
         url = data["url"]
         
         uid = uuid.uuid4().hex
-        downloads_dir = Path("youtubeDownload/video")
-        downloads_dir.mkdir(parents=True, exist_ok=True)
+        downloads_dir = ensure_runtime_dir("youtubeDownload", "video")
         
         # Obtém e sanitiza o título para evitar quebras no sistema de arquivos
         raw_title = await get_title_from_youtube_url(url)

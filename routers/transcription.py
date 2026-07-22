@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from services.charge_model import Charge_Model
 from utils.get_title import get_title_from_file_path_modern
 from core.transcription import brute_transcription
+from utils.runtime_paths import ensure_runtime_dir
 router = APIRouter()
 
 @router.websocket("/ws/transcribe")
@@ -52,8 +53,7 @@ async def websocket_transcribe(websocket: WebSocket):
 
         await asyncio.to_thread(os.remove, output_path)
         
-        transcript_dir = Path("youtubeDownload/transcript")
-        transcript_dir.mkdir(parents=True, exist_ok=True)
+        transcript_dir = ensure_runtime_dir("youtubeDownload", "transcript")
 
         txt_path = transcript_dir / f"transcription: {title}_{uid}.txt"
         
