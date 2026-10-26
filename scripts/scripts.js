@@ -1,309 +1,98 @@
-// scripts.js - VERSÃO COMPLETA E REFATORADA
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = (id) => document.getElementById(id);
+  const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = (path) => `${wsProtocol}//${location.host}${path}`;
+  const toast = $('toast');
+  let timerInterval = null;
+  let secondsElapsed = 0;
 
-// Garante que o script só execute após o DOM estar completamente carregado
-document.addEventListener("DOMContentLoaded", () => {
-    // --- 1. SELEÇÃO DE ELEMENTOS DO DOM ---
-    // Seleciona todos os formulários
-    const transcribeForm = document.getElementById("transcribe-form");
-    const audioForm = document.getElementById("audio-form");
-    const videoForm = document.getElementById("video-form");
-    const nuvemForm = document.getElementById("nuvem-form");
+  const showToast = (message, type='') => {
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    clearTimeout(showToast.t);
+    showToast.t = setTimeout(() => toast.className = 'toast', 2600);
+  };
 
-    // Seleciona todas as divs de resultado
-    const resultTranscription = document.getElementById("result-transcription");
-    const resultAudio = document.getElementById("result-audio");
-    const resultVideo = document.getElementById("result-video");
-    const nuvemResultContainer = document.getElementById("nuvem-result");
-
-    // Elementos de feedback e controle
-    const timerDiv = document.getElementById("timer");
-    const copyButton = document.getElementById("copy-button"); // Este botão precisa existir no HTML
-
-    // Variáveis para o timer
-    let secondsElapsed = 0;
-    let timerInterval;
-
-    // --- 2. FUNÇÕES AUXILIARES ---
-
-    /**
-     * Inicia o timer para mostrar o tempo decorrido.
-     */
-    function startTimer() {
-        clearInterval(timerInterval); // Garante que nenhum timer antigo esteja rodando
-        secondsElapsed = 0;
-        timerDiv.textContent = "⏳ Iniciando contagem...";
-        timerDiv.style.display = 'block'; // Mostra o timer
-        timerInterval = setInterval(() => {
-            secondsElapsed++;
-            timerDiv.textContent = `⏱️ Tempo decorrido: ${secondsElapsed} segundos`;
-        }, 1000);
-    }
-
-    /**
-     * Para o timer e o esconde.
-     */
-    function stopTimer() {
-        clearInterval(timerInterval);
-        timerDiv.textContent = "";
-        timerDiv.style.display = 'none'; // Esconde o timer
-    }
-
-    /**
-     * Limpa o conteúdo de todas as áreas de resultado e esconde o botão de copiar.
-     */
-    function clearAllResults() {
-        resultTranscription.innerHTML = "";
-        resultAudio.innerHTML = "";
-        resultVideo.innerHTML = "";
-        nuvemResultContainer.innerHTML = "";
-        stopTimer(); // Também para e esconde o timer
-        if (copyButton) {
-            copyButton.style.display = "none";
-        }
-    }
-
-    /**
-     * Copia o texto fornecido para a área de transferência.
-     * @param {string} textContent O texto a ser copiado.
-     */
-    function copiartexto(textContent) {
-        navigator.clipboard.writeText(textContent)
-            .then(() => {
-                alert("Texto copiado para a área de transferência!");
-            })
-            .catch((err) => {
-                console.error("Erro ao copiar texto: ", err);
-                alert("Falha ao copiar texto. Por favor, copie manualmente.");
-            });
-    }
-
-    // --- 3. EVENT LISTENERS PARA OS FORMULÁRIOS ---
-
-    // Configura o botão de copiar (se ele existir no HTML)
-    if (copyButton) {
-        copyButton.onclick = () => copiartexto(resultTranscription.textContent);
-    }
-
-    /**
-     * Listener para o formulário de Transcrição (transcribe-form).
-     */
-    transcribeForm.addEventListener("submit", async (e) => {
-        e.preventDefault(); // Impede o envio padrão do formulário
-        clearAllResults(); // Limpa resultados anteriores
-
-        const localfile = document.getElementById("localfile").files[0];
-        const url = document.getElementById("url-input").value;
-        const model = document.getElementById("model").value;
-        const language = document.getElementById("language").value;
-        const chunk_length_choice = parseInt(document.getElementById("chunk_length").value);
-
-        // Validação básica de entrada
-        if (!localfile && !url) {
-            resultTranscription.textContent = "❌ Por favor, forneça um arquivo de áudio ou uma URL do YouTube.";
-            return;
-        }
-
-        startTimer();
-        resultTranscription.textContent = "⏳ Conectando ao servidor para transcrição...";
-
-        try {
-            const socket = new WebSocket(`ws://${location.host}/ws/transcribe`);
-
-            socket.onopen = () => {
-                console.log("WebSocket de transcrição aberto.");
-                // Envia os dados iniciais ou começa o upload do arquivo
-                if (localfile) {
-                    // Validações adicionais para arquivo local
-                    const validTypes = ["audio/mpeg", "audio/wav", "audio/ogg", "video/mp4", "video/quicktime"];
-                    const MAX_SIZE = 1000 * 1024 * 1024; // 1GB
-                    
-                    if (!validTypes.includes(localfile.type)) {
-                        socket.close(1000, "Formato não suportado"); // Código 1000 para fechamento normal
-                        resultTranscription.textContent = "❌ Formato de arquivo não suportado. Use MP3, WAV ou OGG.";
-                        stopTimer();
-                        return;
-                    }
-                    if (localfile.size > MAX_SIZE) {
-                        socket.close(1000, "Arquivo muito grande");
-                        resultTranscription.textContent = "❌ Arquivo muito grande (máximo 1GB)";
-                        stopTimer();
-                        return;
-                    }
-
-                    socket.send(JSON.stringify({ model, language, chunk_length_choice, filename: localfile.name }));
-                    resultTranscription.textContent = "⏳ Enviando arquivo para transcrição...";
-
-                    const chunkSize = 2 * 1024 * 1024; // 2MB
-                    let offset = 0;
-                    
-                    function readAndSendChunk() {
-                        const reader = new FileReader();
-                        const slice = localfile.slice(offset, offset + chunkSize);
-                        reader.onload = (e) => {
-                            if (e.target.error) {
-                                resultTranscription.textContent = `❌ Erro ao ler arquivo: ${e.target.error}`;
-                                socket.close();
-                                return;
-                            }
-                            socket.send(e.target.result);
-                            offset += chunkSize;
-                            if (offset < localfile.size) {
-                                readAndSendChunk();
-                            } else {
-                                socket.send("FILE_END"); // Sinaliza o fim do arquivo
-                                resultTranscription.textContent = "✅ Arquivo enviado. Iniciando processamento...";
-                            }
-                        };
-                        reader.readAsArrayBuffer(slice);
-                    }
-                    readAndSendChunk();
-
-                } else if (url) {
-                    socket.send(JSON.stringify({ url, model, language, chunk_length_choice }));
-                }
-            };
-
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.error) {
-                    resultTranscription.textContent = `❌ Erro: ${data.error}`;
-                    stopTimer();
-                } else {
-                    // Atualiza a mensagem e a transcrição parcial
-                    resultTranscription.textContent = `${data.message || ''}\n\n${data.transcription || ''}`;
-                    
-                    // Se a transcrição estiver completa (progresso 100)
-                    if (data.progress === 100) {
-                        stopTimer();
-                        if (data.download_url) {
-                            resultTranscription.innerHTML += `<br><br><a href="${data.download_url}" download class="download-link">📥 Baixar Transcrição</a>`;
-                        }
-                        if (copyButton) {
-                            copyButton.style.display = "inline-block"; // Mostra o botão de copiar
-                        }
-                    }
-                }
-            };
-
-            socket.onerror = (errorEvent) => {
-                console.error("WebSocket de transcrição com erro:", errorEvent);
-                resultTranscription.textContent = "❌ Erro de conexão com o servidor de transcrição.";
-                stopTimer();
-            };
-
-            socket.onclose = (closeEvent) => {
-                console.log(`WebSocket de transcrição fechado. Código: ${closeEvent.code}, Razão: ${closeEvent.reason}`);
-                // stopTimer() já é chamado quando data.progress === 100 ou em caso de erro
-                // Se a conexão fechar por outro motivo, o timer será parado aqui.
-                if (closeEvent.code !== 1000 && closeEvent.code !== 1005) { // 1000=Normal, 1005=No Status Rcvd
-                    resultTranscription.textContent = `❌ Conexão de transcrição fechada inesperadamente. Razão: ${closeEvent.reason || 'Desconhecida'}`;
-                }
-            };
-
-        } catch (error) {
-            console.error("Erro ao iniciar WebSocket de transcrição:", error);
-            resultTranscription.textContent = `❌ Erro interno ao iniciar a transcrição: ${error.message}`;
-            stopTimer();
-        }
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.target).classList.add('active');
+      window.scrollTo({top:0, behavior:'smooth'});
     });
+  });
 
-    /**
-     * Listener para os formulários de Áudio e Vídeo (audio-form, video-form).
-     */
-    [audioForm, videoForm].forEach((form) => {
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            clearAllResults(); // Limpa resultados anteriores
+  const model = $('model'), language = $('language'), chunk = $('chunk_length');
+  const syncMetrics = () => {
+    $('metric-model').textContent = model.options[model.selectedIndex].text.split('·')[0].trim();
+    $('metric-language').textContent = language.options[language.selectedIndex].text;
+    $('metric-chunk').textContent = `${chunk.value}s`;
+  };
+  [model, language, chunk].forEach(el => el.addEventListener('change', syncMetrics)); syncMetrics();
 
-            const isAudio = form.id.includes("audio");
-            const inputId = isAudio ? "url-input-audio" : "url-input-video";
-            const url = document.getElementById(inputId).value;
-            const resultDiv = isAudio ? resultAudio : resultVideo;
-            
-            if (!url) {
-                resultDiv.textContent = "❌ Por favor, insira uma URL do YouTube.";
-                return;
-            }
+  $('localfile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    $('file-label').textContent = file ? `${file.name} · ${(file.size/1024/1024).toFixed(1)} MB` : 'MP3, WAV, OGG, MP4 ou MOV · até 1 GB';
+  });
 
-            resultDiv.textContent = `⏳ Gerando ${isAudio ? "áudio" : "vídeo"}...`;
+  const setProgress = (value=0, message='') => {
+    $('transcription-progress').style.width = `${Math.max(0, Math.min(100, value))}%`;
+    if (message) $('transcription-status').textContent = message;
+  };
+  const startTimer = () => {
+    clearInterval(timerInterval); secondsElapsed = 0; $('timer').textContent = '00:00';
+    timerInterval = setInterval(() => { secondsElapsed++; const m=String(Math.floor(secondsElapsed/60)).padStart(2,'0'); const s=String(secondsElapsed%60).padStart(2,'0'); $('timer').textContent=`${m}:${s}`; },1000);
+  };
+  const stopTimer = () => clearInterval(timerInterval);
 
-            try {
-                const socket = new WebSocket(`ws://${location.host}/ws/${isAudio ? "audio" : "video"}`);
+  $('copy-button').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('result-transcription').textContent); showToast('Transcrição copiada.', 'success'); }
+    catch { showToast('Não foi possível copiar automaticamente.', 'error'); }
+  });
 
-                socket.onopen = () => {
-                    console.log(`WebSocket de ${isAudio ? "áudio" : "vídeo"} aberto.`);
-                    socket.send(JSON.stringify({ url }));
-                };
+  $('transcribe-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const localfile = $('localfile').files[0];
+    const url = $('url-input').value.trim();
+    if (!localfile && !url) { showToast('Envie um arquivo ou informe uma URL.', 'error'); return; }
 
-                socket.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    if (data.error) {
-                        resultDiv.textContent = `❌ Erro:\n${data.error}`;
-                    } else if (data.download_url) {
-                        resultDiv.textContent = `${isAudio ? "Áudio" : "Vídeo"} gerado com sucesso`;
-                        resultDiv.innerHTML += `<br><br><a href="${data.download_url}" download class="download-link">📥 Baixar</a>`;
-                    }
-                };
+    const submit = e.currentTarget.querySelector('button[type=submit]');
+    submit.disabled = true; $('copy-button').style.display='none'; $('result-transcription').textContent='Preparando transcrição…'; setProgress(2,'Conectando ao motor de transcrição…'); startTimer();
+    const socket = new WebSocket(wsUrl('/ws/transcribe'));
 
-                socket.onerror = (errorEvent) => {
-                    console.error(`WebSocket de ${isAudio ? "áudio" : "vídeo"} com erro:`, errorEvent);
-                    resultDiv.textContent = `❌ Erro de conexão com o servidor para ${isAudio ? "áudio" : "vídeo"}.`;
-                };
-                
-                socket.onclose = (closeEvent) => {
-                    console.log(`WebSocket de ${isAudio ? "áudio" : "vídeo"} fechado. Código: ${closeEvent.code}, Razão: ${closeEvent.reason}`);
-                    if (closeEvent.code !== 1000 && closeEvent.code !== 1005 && resultDiv.textContent.includes("⏳")) { 
-                        resultDiv.textContent = `❌ Conexão de ${isAudio ? "áudio" : "vídeo"} fechada inesperadamente. Razão: ${closeEvent.reason || 'Desconhecida'}`;
-                    }
-                };
+    socket.onopen = () => {
+      const payload = {model:model.value, language:language.value, chunk_length_choice:parseInt(chunk.value)};
+      if (localfile) {
+        const validTypes = ['audio/mpeg','audio/wav','audio/ogg','video/mp4','video/quicktime'];
+        if (!validTypes.includes(localfile.type)) { showToast('Formato não suportado.', 'error'); socket.close(1000); submit.disabled=false; stopTimer(); return; }
+        if (localfile.size > 1000*1024*1024) { showToast('Arquivo acima de 1 GB.', 'error'); socket.close(1000); submit.disabled=false; stopTimer(); return; }
+        socket.send(JSON.stringify({...payload, filename:localfile.name}));
+        const chunkSize=2*1024*1024; let offset=0;
+        const sendNext=()=>{ const reader=new FileReader(); const slice=localfile.slice(offset,offset+chunkSize); reader.onload=(ev)=>{ socket.send(ev.target.result); offset+=chunkSize; const uploadPct=Math.min(18,Math.round((offset/localfile.size)*18)); setProgress(uploadPct,`Enviando arquivo… ${Math.min(100,Math.round(offset/localfile.size*100))}%`); offset<localfile.size ? sendNext() : (socket.send('FILE_END'),setProgress(20,'Upload concluído. Processando áudio…')); }; reader.readAsArrayBuffer(slice); }; sendNext();
+      } else socket.send(JSON.stringify({...payload,url}));
+    };
 
-            } catch (error) {
-                console.error(`Erro ao iniciar WebSocket de ${isAudio ? "áudio" : "vídeo"}:`, error);
-                resultDiv.textContent = `❌ Erro interno ao processar ${isAudio ? "áudio" : "vídeo"}: ${error.message}`;
-            }
-        });
-    });
+    socket.onmessage = (event) => {
+      const data=JSON.parse(event.data);
+      if (data.error) { $('result-transcription').textContent=`Erro\n\n${data.error}`; setProgress(0,'A transcrição falhou.'); showToast('Erro durante a transcrição.', 'error'); stopTimer(); submit.disabled=false; return; }
+      const pct = typeof data.progress==='number' ? data.progress : 20;
+      setProgress(pct, data.message || 'Processando…');
+      if (data.transcription) $('result-transcription').textContent=data.transcription;
+      if (data.progress===100) { stopTimer(); submit.disabled=false; $('copy-button').style.display='inline-flex'; if(data.download_url){ const a=document.createElement('a'); a.href=data.download_url; a.download=''; a.className='download-link'; a.textContent='Baixar transcrição'; $('result-transcription').append('\n\n'); $('result-transcription').after(a); } showToast('Transcrição concluída.', 'success'); }
+    };
+    socket.onerror=()=>{ setProgress(0,'Erro de conexão com o servidor.'); showToast('Falha na conexão WebSocket.', 'error'); stopTimer(); submit.disabled=false; };
+    socket.onclose=()=>{ if(submit.disabled){ submit.disabled=false; stopTimer(); } };
+  });
 
-    /**
-     * Listener para o formulário da Nuvem de Palavras (nuvem-form).
-     */
-    nuvemForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        clearAllResults(); // Limpa resultados anteriores
+  const setupMediaForm=(formId,inputId,resultId,path,label)=>{
+    $(formId).addEventListener('submit',(e)=>{e.preventDefault(); const url=$(inputId).value.trim(); if(!url){showToast('Informe uma URL.','error');return;} const button=e.currentTarget.querySelector('button[type=submit]'); const result=$(resultId); button.disabled=true; result.textContent=`Preparando ${label}…`; const socket=new WebSocket(wsUrl(path)); socket.onopen=()=>socket.send(JSON.stringify({url})); socket.onmessage=(ev)=>{const data=JSON.parse(ev.data); if(data.error){result.textContent=`Erro: ${data.error}`;button.disabled=false;showToast(`Falha ao gerar ${label}.`,'error');} else if(data.download_url){result.innerHTML=`<strong>${label[0].toUpperCase()+label.slice(1)} pronto.</strong><br><a class="download-link" href="${data.download_url}" download>Baixar arquivo</a>`;button.disabled=false;showToast(`${label[0].toUpperCase()+label.slice(1)} gerado.`,'success');}}; socket.onerror=()=>{result.textContent='Erro de conexão com o servidor.';button.disabled=false;}; socket.onclose=()=>button.disabled=false; });
+  };
+  setupMediaForm('audio-form','url-input-audio','result-audio','/ws/audio','áudio');
+  setupMediaForm('video-form','url-input-video','result-video','/ws/video','vídeo');
 
-        const fileInput = document.getElementById("file-input");
-        const file = fileInput.files[0];
-
-        if (!file) {
-            nuvemResultContainer.textContent = "❌ Por favor, selecione um arquivo .txt para gerar a nuvem.";
-            return;
-        }
-
-        nuvemResultContainer.textContent = "⏳ Gerando nuvem de palavras...";
-        
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch("/upload/", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) { // Verifica se a requisição foi bem-sucedida (status 2xx)
-                const errorData = await response.json().catch(() => ({ message: "Erro desconhecido" }));
-                throw new Error(`Erro do servidor (${response.status}): ${errorData.message || response.statusText}`);
-            }
-
-            const data = await response.json();
-            if (data.image_path) {
-                nuvemResultContainer.innerHTML = `<img src="${data.image_path}" alt="Nuvem de Palavras" class="word-cloud-image">`;
-            } else {
-                nuvemResultContainer.textContent = `❌ Erro ao gerar nuvem: ${data.message || 'Caminho da imagem não retornado.'}`;
-            }
-        } catch (error) {
-            console.error("Erro na geração da nuvem de palavras:", error);
-            nuvemResultContainer.textContent = `❌ Erro de comunicação com o servidor para a nuvem de palavras: ${error.message}`;
-        }
-    });
-}); // Fim do DOMContentLoaded
+  $('nuvem-form').addEventListener('submit', async (e)=>{
+    e.preventDefault(); const file=$('file-input').files[0]; if(!file){showToast('Selecione um arquivo .txt.','error');return;} const button=e.currentTarget.querySelector('button[type=submit]'); const result=$('nuvem-result'); button.disabled=true; result.textContent='Gerando nuvem…'; const fd=new FormData(); fd.append('file',file);
+    try{const response=await fetch('/upload/',{method:'POST',body:fd}); if(!response.ok) throw new Error(`HTTP ${response.status}`); const data=await response.json(); if(!data.image_path) throw new Error(data.message||'Imagem não retornada'); result.innerHTML=`<img src="${data.image_path}" alt="Nuvem de palavras" />`;showToast('Nuvem gerada.','success');}catch(err){result.textContent=`Erro: ${err.message}`;showToast('Falha ao gerar a nuvem.','error');}finally{button.disabled=false;}
+  });
+});

@@ -1,174 +1,167 @@
 <!doctype html>
-<html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <title>FathomVoice: YouTube Transcriber + Nuvem de Palavras</title>
-    <link rel="stylesheet" href="/static/style.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="shortcut icon" href="/static/IMG/FathomVoiceIcon.png" type="image/x-icon">
-    <link 
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" 
-      rel="stylesheet" 
-      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" 
-      crossorigin="anonymous"
-    >
-  </head>
-  <body>
-    <div class="max-w-7xl mx-auto">
-      <header class="text-center mb-16">
-        <img src="/static/IMG/FathomVoiceIcon.png" width="100" height="100" alt="FathomVoice Logo" class="mx-auto mb-4">
-        <h1 class="hero-title">FathomVoice</h1>
-        <p class="hero-subtitle">
-          Extraia transcrições, áudio e vídeo do YouTube com IA. Crie nuvens de
-          palavras impressionantes a partir de seus textos.
-        </p>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090b12" />
+  <title>FathomVoice — AI Media Workspace</title>
+  <link rel="icon" href="/static/IMG/FathomVoiceIcon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#transcription" aria-label="FathomVoice">
+        <img src="/static/IMG/FathomVoiceIcon.png" alt="" />
+        <div><strong>FathomVoice</strong><span>AI Media Workspace</span></div>
+      </a>
+
+      <nav class="side-nav" aria-label="Ferramentas">
+        <button class="nav-item active" data-target="transcription"><span class="nav-icon">✦</span><span>Transcrever</span></button>
+        <button class="nav-item" data-target="audio"><span class="nav-icon">◉</span><span>Áudio</span></button>
+        <button class="nav-item" data-target="video"><span class="nav-icon">▶</span><span>Vídeo</span></button>
+        <button class="nav-item" data-target="wordcloud"><span class="nav-icon">☁</span><span>Nuvem</span></button>
+      </nav>
+
+      <div class="system-card">
+        <div class="status-row"><span class="status-dot"></span><strong>Sistema pronto</strong></div>
+        <p>FastAPI + WebSocket + Whisper</p>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">FATHOMVOICE / WORKSPACE</span>
+          <h1>Transforme mídia em informação.</h1>
+          <p>Transcrição local ou via URL, extração de áudio e vídeo e análise textual em uma interface única.</p>
+        </div>
+        <div class="engine-badge"><span></span> Engine online</div>
       </header>
 
-      <main class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        <section class="tool-card fade-in">
-          <h2>🎥 Transcrição de Vídeo</h2>
-          <form id="transcribe-form" class="ai-form">
-            <div class="form-group">
-              <label for="localfile" class="form-label">📁 Arquivo Local (opcional)</label>
-              <input
-                type="file"
-                name="localfile"
-                id="localfile"
-                class="form-file"
-                accept="video/*,audio/*" />
-            </div>
-
-            <div class="form-group">
-              <label for="url-input" class="form-label">🔗 URL do YouTube</label>
-              <input
-                type="text"
-                id="url-input"
-                name="url"
-                placeholder="Cole a URL do YouTube aqui"
-                class="form-input"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="model" class="form-label">⚡ Modelo Whisper</label>
-              <select name="model" id="model" class="form-select">
-                <option value="tiny">Tiny (Rápido)</option>
-                <option value="base">Base (Balanceado)</option>
-                <option value="small">Small (Bom)</option>
-                <option value="large-v3-turbo">Medium (Muito Bom)</option>
-                 <option value="distil-large-v3.5">
-                  Distil-Large-v3.5 (Excelente, mas só inglês)
-                </option>
-                <option value="large-v3">Large v3 (Melhor)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="language" class="form-label">🌍 Idioma do Vídeo</label>
-              <select name="language" id="language" class="form-select">
-                <option value="pt">Português</option>
-                <option value="en">English</option>
-                <option value="none">Detectar automaticamente</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="chunk_length" class="form-label">⏱️ Duração do Chunk (segundos)</label>
-              <select name="chunk_length" id="chunk_length" class="form-select">
-                <option value="30">30 segundos</option>
-                <option value="45">45 segundos</option>
-                <option value="60" selected>60 segundos</option>
-                <option value="90">90 segundos</option>
-                <option value="120">120 segundos</option>
-              </select>
-            </div>
-
-            <button type="submit" class="btn-primary">
-              🎯 Transcrever Vídeo
-            </button>
-                  <div id="timer" class="timer accordion-body"></div>
-
-          </form>
-
-          <div id="result-transcription" class="result-container mb-4 mt-4 text-light mx-auto" color="blue"></div>
-          <button id="copy-button" class="btn-secondary" style="display:none; margin-top: 1rem;">
-              📋 Copiar Transcrição
-          </button>
-        </section>
-
-        <div class="space-y-6">
-          <section class="tool-card slide-up">
-            <h2>🎵 Extrair Áudio</h2>
-            <form id="audio-form" class="ai-form">
-              <div class="form-group">
-                <label for="url-input-audio" class="form-label">🔗 URL do YouTube</label>
-                <input
-                  type="text"
-                  id="url-input-audio"
-                  name="url"
-                  placeholder="Cole URL do YouTube para áudio"
-                  class="form-input"
-                  required
-                />
-              </div>
-              <button type="submit" class="btn-secondary">
-                🎵 Gerar Áudio
-              </button>
-              <div id="result-audio" class="result-container mt-4 text-light"></div>
-            </form>
-          </section>
-
-          <section class="tool-card slide-up">
-            <h2>🎬 Baixar Vídeo</h2>
-            <form id="video-form" class="ai-form">
-              <div class="form-group">
-                <label for="url-input-video" class="form-label">🔗 URL do YouTube</label>
-                <input
-                  type="text"
-                  id="url-input-video"
-                  name="url"
-                  placeholder="Cole URL do YouTube para vídeo"
-                  class="form-input"
-                  required
-                />
-              </div>
-              <button type="submit" class="btn-accent">🎬 Baixar Vídeo</button>
-              <div id="result-video" class="result-container mt-4 text-light"></div>
-            </form>
-          </section>
-        </div>
-      </main>
-
-      <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        <div class="tool-card glow-pulse">
-          <h2>☁️ Nuvem de Palavras</h2>
-          <form class="nuvem-form ai-form" id="nuvem-form">
-            <div class="form-group">
-              <label for="file-input" class="form-label">📄 Arquivo de Texto (.txt)</label>
-              <input
-                type="file"
-                id="file-input"
-                accept=".txt"
-                class="form-file"
-                required
-              />
-            </div>
-            <button type="submit" class="btn-accent">☁️ Gerar Nuvem</button>
-          </form>
+      <section class="tool-view active" id="transcription" data-view>
+        <div class="section-heading">
+          <div><span class="step">01</span><h2>Transcrição inteligente</h2></div>
+          <p>Envie um arquivo ou cole uma URL. O texto aparece progressivamente durante o processamento.</p>
         </div>
 
-        <div id="nuvem-result" class="result-container"></div>
+        <div class="transcription-grid">
+          <form id="transcribe-form" class="panel form-panel">
+            <div class="input-mode-grid">
+              <label class="drop-zone" for="localfile">
+                <input type="file" name="localfile" id="localfile" accept="video/*,audio/*" />
+                <span class="drop-icon">↑</span>
+                <strong>Enviar arquivo</strong>
+                <small id="file-label">MP3, WAV, OGG, MP4 ou MOV · até 1 GB</small>
+              </label>
+              <div class="or-divider"><span>OU</span></div>
+              <div class="field url-field">
+                <label for="url-input">URL da mídia</label>
+                <input type="url" id="url-input" name="url" placeholder="https://youtube.com/watch?v=..." />
+                <span class="field-hint">Cole o link que deseja processar</span>
+              </div>
+            </div>
+
+            <div class="settings-grid">
+              <div class="field">
+                <label for="model">Modelo Whisper</label>
+                <select name="model" id="model">
+                  <option value="tiny">Tiny · velocidade máxima</option>
+                  <option value="base">Base · leve</option>
+                  <option value="small">Small · equilibrado</option>
+                  <option value="large-v3-turbo" selected>Large v3 Turbo · recomendado</option>
+                  <option value="distil-large-v3.5">Distil Large v3.5 · inglês</option>
+                  <option value="large-v3">Large v3 · máxima precisão</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="language">Idioma</label>
+                <select name="language" id="language">
+                  <option value="pt">Português</option>
+                  <option value="en">English</option>
+                  <option value="none">Detectar automaticamente</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="chunk_length">Chunk</label>
+                <select name="chunk_length" id="chunk_length">
+                  <option value="30">30 segundos</option>
+                  <option value="45">45 segundos</option>
+                  <option value="60" selected>60 segundos</option>
+                  <option value="90">90 segundos</option>
+                  <option value="120">120 segundos</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="primary-action"><span>✦</span> Iniciar transcrição</button>
+          </form>
+
+          <aside class="panel live-panel">
+            <div class="live-header">
+              <div><span class="pulse-dot"></span><strong>Processamento</strong></div>
+              <span id="timer" class="timer">Aguardando</span>
+            </div>
+            <div class="progress-track" aria-hidden="true"><span id="transcription-progress"></span></div>
+            <div id="transcription-status" class="status-copy">Pronto para iniciar.</div>
+            <div class="mini-metrics">
+              <div><span>Modelo</span><strong id="metric-model">Large v3 Turbo</strong></div>
+              <div><span>Idioma</span><strong id="metric-language">Português</strong></div>
+              <div><span>Chunk</span><strong id="metric-chunk">60s</strong></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="panel result-panel">
+          <div class="result-toolbar">
+            <div><span class="result-kicker">OUTPUT</span><h3>Transcrição</h3></div>
+            <button id="copy-button" class="ghost-button" style="display:none">Copiar texto</button>
+          </div>
+          <pre id="result-transcription" class="transcript-output">Sua transcrição aparecerá aqui.</pre>
+        </div>
       </section>
-    </div>
 
-    <script src="/scripts/scripts.js" defer></script>
-    <script 
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" 
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" 
-      crossorigin="anonymous"
-    ></script>
-  </body>
+      <section class="tool-view" id="audio" data-view>
+        <div class="section-heading"><div><span class="step">02</span><h2>Extrair áudio</h2></div><p>Gere uma faixa de áudio pronta para download a partir de uma URL.</p></div>
+        <form id="audio-form" class="panel compact-panel">
+          <div class="field"><label for="url-input-audio">URL da mídia</label><input type="url" id="url-input-audio" name="url" placeholder="Cole a URL aqui" required /></div>
+          <button type="submit" class="primary-action">Gerar áudio</button>
+          <div id="result-audio" class="inline-result">Aguardando uma URL.</div>
+        </form>
+      </section>
+
+      <section class="tool-view" id="video" data-view>
+        <div class="section-heading"><div><span class="step">03</span><h2>Baixar vídeo</h2></div><p>Baixe a melhor combinação de vídeo e áudio disponível e receba o arquivo final em MP4.</p></div>
+        <form id="video-form" class="panel compact-panel">
+          <div class="field"><label for="url-input-video">URL da mídia</label><input type="url" id="url-input-video" name="url" placeholder="Cole a URL aqui" required /></div>
+          <button type="submit" class="primary-action">Preparar vídeo</button>
+          <div id="result-video" class="inline-result">Aguardando uma URL.</div>
+        </form>
+      </section>
+
+      <section class="tool-view" id="wordcloud" data-view>
+        <div class="section-heading"><div><span class="step">04</span><h2>Nuvem de palavras</h2></div><p>Converta um arquivo de texto em uma visualização rápida dos termos mais recorrentes.</p></div>
+        <div class="wordcloud-grid">
+          <form class="panel compact-panel" id="nuvem-form">
+            <label class="drop-zone small" for="file-input">
+              <input type="file" id="file-input" accept=".txt" required />
+              <span class="drop-icon">↥</span><strong>Selecionar .txt</strong><small>Texto UTF-8</small>
+            </label>
+            <button type="submit" class="primary-action">Gerar nuvem</button>
+          </form>
+          <div id="nuvem-result" class="panel wordcloud-result">A visualização aparecerá aqui.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/scripts/scripts.js" defer></script>
+</body>
 </html>

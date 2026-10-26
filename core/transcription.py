@@ -5,7 +5,7 @@ def _safe_next(it):
             return next(it)
         except StopIteration:
             return None
-async def brute_transcription(audio_path, model, language):
+async def brute_transcription(audio_path, model, language, chunk_length):
     """Transcreve um arquivo de áudio e emite os segmentos conforme vão sendo processados."""
     if not audio_path:
         raise ValueError("audio_path is obrigatório")
@@ -30,6 +30,8 @@ async def brute_transcription(audio_path, model, language):
             # Seus parâmetros mantidos conforme solicitado2
             vad_parameters=dict(min_speech_duration_ms=150, min_silence_duration_ms=150, threshold=0.30),
             beam_size=1,
+            word_timestamps=True,
+            chunk_length=chunk_length,
         )
     except Exception as exc: 
         raise RuntimeError(f"Erro ao transcrever o áudio '{audio_path}': {exc}") from exc

@@ -39,7 +39,7 @@ async def websocket_transcribe(websocket: WebSocket):
         title = get_title_from_file_path_modern(output_path)
 
 
-        async for start, end, text in brute_transcription(output_path, charge_model, language):
+        async for start, end, text in brute_transcription(output_path, charge_model, language, chunk_length):
             clean_text = Clean_Text(text)
             transcriptions.append(f"{text}")
             print(f"✅ Transcrito até {end} segundos de {duration} segundos totais.")
